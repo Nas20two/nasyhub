@@ -1,90 +1,104 @@
 
 
-# NaSy Hub - Personal Portfolio PWA
+# NaSy Hub Enhancement Plan
 
-A warm, creative portfolio Progressive Web App serving as your central hub for apps, AI prototypes, artwork, and music.
-
----
-
-## Design & Branding
-
-**Style:** Warm & Creative aesthetic with earthy tones (warm ambers, terracotta, cream), soft gradients, and artistic textures.
-
-**Header:** "NaSy Hub" with a welcoming tagline
-
-**Dark Mode:** Toggle between cozy light and elegant dark themes
+This plan covers three main features: admin role grant, editable content from admin panel, and a gated resume request system. Given the scope, I'm structuring this as **Phase 1 (today)** and **Phase 2 (tomorrow)** to stay within your 5-credit budget.
 
 ---
 
-## Main Sections
+## Phase 1: Admin Role + Editable Content (Today - ~3 credits)
 
-### 1. Hero / Welcome
-Welcoming landing with your brand and brief introduction.
+### Step 1: Grant Admin Role
+Run SQL to assign admin role to the first registered user:
+```sql
+INSERT INTO user_roles (user_id, role) 
+SELECT id, 'admin' FROM auth.users LIMIT 1;
+```
 
-### 2. About Me
-Your bio, skills, and profile photo.
+### Step 2: Make Frontend Sections Dynamic
+Currently, Hero, About, Contact sections have hardcoded content. I'll update them to pull from the `profiles` table so you can edit everything from admin:
 
-### 3. My Apps
-Grid of app cards with screenshots, descriptions, and "Launch App" buttons (opens in new tab).
+**Changes to sections:**
+- `HeroSection.tsx` - Fetch tagline/subtitle from profiles table
+- `AboutSection.tsx` - Fetch bio, avatar, skills from profiles table  
+- `ContactSection.tsx` - Fetch email, location, social links from profiles table
+- `ResumeSection.tsx` - Fetch experience/education from a new table
 
-### 4. AI Prototypes
-Showcase your Google AI Studio experiments with linkable cards.
+**Database additions:**
+- Add `hero_tagline`, `hero_subtitle` columns to `profiles` table
+- Create `resume_entries` table (for experience/education items)
 
-### 5. Gallery
-Masonry-style image grid featuring:
-- **Categories/Albums** for organization
-- **Lightbox view** for fullscreen browsing
-- **Image captions** with title and description
-
-### 6. Music (NEW)
-A dedicated section for your audio content:
-- **Original Music/Beats** - Upload and play your audio files with a custom audio player
-- **Sound Design/Samples** - Showcase audio experiments with waveform visualization
-- **Curated Playlists** - Embedded Spotify players for featured content, link cards for additional playlists
-- Each audio item can have a title, description, and category
-
-### 7. Resume/CV
-Downloadable or viewable resume section.
-
-### 8. Contact
-- Contact form for visitor messages
-- Social media links
-- Email display
+### Step 3: Extend Admin Profile Panel
+Add fields for:
+- Hero tagline & subtitle
+- Skills list (editable)
+- Resume entries management (add/edit/delete experience & education)
 
 ---
 
-## Admin Panel (Private)
+## Phase 2: Gated Resume System (Tomorrow - ~2 credits)
 
-Secure dashboard where you can:
-- Manage all portfolio sections
-- **Upload audio samples** (MP3, WAV) with titles and descriptions
-- **Add Spotify links** - Choose between embedded player or link card display
-- Upload gallery images with categories and captions
-- View contact form submissions
+### Step 1: Create Resume Requests Table
+```sql
+CREATE TABLE resume_requests (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    requester_email TEXT NOT NULL,
+    requester_name TEXT NOT NULL,
+    notes TEXT,
+    status TEXT DEFAULT 'pending', -- pending, approved, rejected
+    download_token UUID DEFAULT gen_random_uuid(),
+    approved_at TIMESTAMP WITH TIME ZONE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT now()
+);
+```
+
+### Step 2: Update Resume Section UI
+- Replace direct download button with "Request Resume" button
+- Show request form modal (name, email, brief note)
+- Confirmation message after submission
+
+### Step 3: Admin Resume Requests Panel
+- Add "Resume Requests" tab to admin dashboard
+- Show pending requests with requester details
+- Approve/Reject buttons with one-click actions
+
+### Step 4: Email Notifications via Edge Function
+Create `send-resume-notification` edge function:
+- When request submitted: Email you with requester details
+- When approved: Email requester with unique download link
+- Uses Resend for email delivery (will need RESEND_API_KEY)
+
+### Step 5: Secure Download Page
+- Create `/resume/download/:token` route
+- Validates token against approved requests
+- Serves resume file only for valid, approved tokens
 
 ---
 
-## Technical Features
+## Summary
 
-### Progressive Web App (PWA)
-- Manifest file for home screen installation
-- App icon and splash screen
-- Installable on mobile devices
-
-### Responsive Design
-- Mobile-first grid layout
-- Touch-friendly navigation
-
-### Backend (Lovable Cloud)
-- Database for all content (apps, prototypes, gallery, music, contacts)
-- Authentication for admin access
-- **File storage** for gallery images AND audio files
+| Phase | Features | Estimated Credits |
+|-------|----------|-------------------|
+| Phase 1 | Admin role, dynamic content, editable sections | ~3 credits |
+| Phase 2 | Gated resume with email workflow | ~2 credits |
 
 ---
 
-## Pages Summary
+## What You'll Be Able To Do After Phase 1
 
-1. **Home** - Hero, About, Apps, Prototypes, Gallery, Music, Resume, Contact
-2. **Admin Login** - Secure authentication
-3. **Admin Dashboard** - Full content management including audio uploads and Spotify links
+- Log in as admin and edit your profile content
+- Changes to bio, tagline, skills, social links appear immediately on homepage
+- Manage experience/education entries for resume section
+- Full CRUD on apps, prototypes, gallery, music (already working)
+
+## What Phase 2 Adds
+
+- Visitors request your resume instead of downloading directly
+- You receive email notifications for each request
+- One-click approve/reject from admin panel
+- Approved visitors get unique download link via email
+
+---
+
+Ready to start Phase 1 today?
 
