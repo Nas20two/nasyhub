@@ -1,32 +1,60 @@
-import { Download, FileText, Briefcase, GraduationCap, Award } from "lucide-react";
+ import { useEffect, useState } from "react";
+ import { Download, Briefcase, GraduationCap, Award } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
+ import { supabase } from "@/integrations/supabase/client";
 
-// Placeholder data
-const experience = [
-  {
-    title: "Full Stack Developer",
-    company: "Your Company",
-    period: "2022 - Present",
-    description: "Building web applications and exploring AI technologies.",
-  },
-  {
-    title: "Freelance Designer",
-    company: "Self-employed",
-    period: "2020 - 2022",
-    description: "Creating digital art and design solutions for clients.",
-  },
-];
-
-const education = [
-  {
-    degree: "Bachelor's in Computer Science",
-    school: "Your University",
-    period: "2016 - 2020",
-  },
-];
+ interface ResumeEntry {
+   id: string;
+   type: string;
+   title: string;
+   organization: string;
+   period: string;
+   description: string | null;
+   display_order: number;
+ }
 
 export function ResumeSection() {
+   const [experience, setExperience] = useState<ResumeEntry[]>([]);
+   const [education, setEducation] = useState<ResumeEntry[]>([]);
+   const [skills, setSkills] = useState<string[]>([]);
+   const [resumeUrl, setResumeUrl] = useState<string | null>(null);
+   const [isLoading, setIsLoading] = useState(true);
+ 
+   useEffect(() => {
+     const fetchData = async () => {
+       // Fetch resume entries
+       const { data: entries } = await supabase
+         .from("resume_entries")
+         .select("*")
+         .order("display_order", { ascending: true });
+       
+       if (entries) {
+         setExperience(entries.filter(e => e.type === "experience"));
+         setEducation(entries.filter(e => e.type === "education"));
+       }
+ 
+       // Fetch skills and resume URL from profile
+       const { data: profile } = await supabase
+         .from("profiles")
+         .select("skills, resume_url")
+         .limit(1)
+         .single();
+       
+       if (profile) {
+         setSkills(profile.skills || []);
+         setResumeUrl(profile.resume_url);
+       }
+       
+       setIsLoading(false);
+     };
+     fetchData();
+   }, []);
+ 
+   const displaySkills = skills.length > 0 
+     ? skills.map(s => s.split(":")[0].trim())
+     : ["React", "TypeScript", "Node.js", "Python", "AI/ML", "Figma", "Ableton", "Photoshop"];
+ 
   return (
     <section id="resume" className="py-24">
       <div className="container mx-auto px-4">
@@ -39,7 +67,11 @@ export function ResumeSection() {
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto mb-8">
               A brief overview of my professional journey and skills.
             </p>
-            <Button className="gradient-accent">
+             <Button 
+               className="gradient-accent"
+               onClick={() => resumeUrl && window.open(resumeUrl, "_blank")}
+               disabled={!resumeUrl}
+             >
               <Download className="mr-2 h-4 w-4" />
               Download Full Resume
             </Button>
@@ -55,23 +87,25 @@ export function ResumeSection() {
               </div>
               <div className="space-y-4">
                 {experience.map((item, index) => (
-                  <Card key={index} className="border-none shadow-card">
+                   <Card key={item.id} className="border-none shadow-card">
                     <CardHeader className="pb-2">
                       <div className="flex items-start justify-between">
                         <div>
                           <h4 className="font-semibold">{item.title}</h4>
-                          <p className="text-sm text-primary">{item.company}</p>
+                           <p className="text-sm text-primary">{item.organization}</p>
                         </div>
                         <span className="text-xs text-muted-foreground bg-secondary px-2 py-1 rounded">
                           {item.period}
                         </span>
                       </div>
                     </CardHeader>
-                    <CardContent>
+                     {item.description && (
+                     <CardContent>
                       <p className="text-sm text-muted-foreground">
                         {item.description}
                       </p>
                     </CardContent>
+                     )}
                   </Card>
                 ))}
               </div>
@@ -85,12 +119,12 @@ export function ResumeSection() {
               </div>
               <div className="space-y-4">
                 {education.map((item, index) => (
-                  <Card key={index} className="border-none shadow-card">
+                   <Card key={item.id} className="border-none shadow-card">
                     <CardHeader className="pb-2">
                       <div className="flex items-start justify-between">
                         <div>
-                          <h4 className="font-semibold">{item.degree}</h4>
-                          <p className="text-sm text-primary">{item.school}</p>
+                           <h4 className="font-semibold">{item.title}</h4>
+                           <p className="text-sm text-primary">{item.organization}</p>
                         </div>
                         <span className="text-xs text-muted-foreground bg-secondary px-2 py-1 rounded">
                           {item.period}
@@ -110,7 +144,7 @@ export function ResumeSection() {
                 <Card className="border-none shadow-card">
                   <CardContent className="p-4">
                     <div className="flex flex-wrap gap-2">
-                      {["React", "TypeScript", "Node.js", "Python", "AI/ML", "Figma", "Ableton", "Photoshop"].map((skill) => (
+                       {displaySkills.map((skill) => (
                         <span
                           key={skill}
                           className="px-3 py-1 bg-secondary text-secondary-foreground rounded-full text-sm"

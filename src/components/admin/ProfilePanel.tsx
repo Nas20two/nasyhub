@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Upload, Save } from "lucide-react";
+ import { Upload, Save, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -20,6 +20,19 @@ interface Profile {
   linkedin_url: string | null;
   twitter_url: string | null;
   resume_url: string | null;
+   hero_tagline: string | null;
+   hero_subtitle: string | null;
+   skills: string[] | null;
+ }
+ 
+ interface ResumeEntry {
+   id?: string;
+   type: "experience" | "education";
+   title: string;
+   organization: string;
+   period: string;
+   description: string | null;
+   display_order: number;
 }
 
 export function ProfilePanel() {
@@ -29,6 +42,8 @@ export function ProfilePanel() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [uploading, setUploading] = useState<"avatar" | "resume" | null>(null);
+   const [resumeEntries, setResumeEntries] = useState<ResumeEntry[]>([]);
+   const [skillInput, setSkillInput] = useState("");
   const [profile, setProfile] = useState<Profile>({
     user_id: "",
     display_name: "",
@@ -40,6 +55,9 @@ export function ProfilePanel() {
     linkedin_url: "",
     twitter_url: "",
     resume_url: "",
+     hero_tagline: "",
+     hero_subtitle: "",
+     skills: [],
   });
 
   useEffect(() => {
@@ -58,6 +76,17 @@ export function ProfilePanel() {
       } else {
         setProfile((prev) => ({ ...prev, user_id: user.id }));
       }
+       
+       // Fetch resume entries
+       const { data: entries } = await supabase
+         .from("resume_entries")
+         .select("*")
+         .order("display_order", { ascending: true });
+       
+       if (entries) {
+         setResumeEntries(entries as ResumeEntry[]);
+       }
+       
       setIsLoading(false);
     };
 
@@ -122,6 +151,9 @@ export function ProfilePanel() {
       linkedin_url: profile.linkedin_url || null,
       twitter_url: profile.twitter_url || null,
       resume_url: profile.resume_url || null,
+       hero_tagline: profile.hero_tagline || null,
+       hero_subtitle: profile.hero_subtitle || null,
+       skills: profile.skills || [],
     };
 
     if (profile.id) {
@@ -151,6 +183,73 @@ export function ProfilePanel() {
     }
     setIsSaving(false);
   };
+ 
+   const handleAddEntry = (type: "experience" | "education") => {
+     const newEntry: ResumeEntry = {
+       type,
+       title: "",
+       organization: "",
+       period: "",
+       description: "",
+       display_order: resumeEntries.filter(e => e.type === type).length,
+     };
+     setResumeEntries([...resumeEntries, newEntry]);
+   };
+ 
+   const handleUpdateEntry = (index: number, field: keyof ResumeEntry, value: string) => {
+     const updated = [...resumeEntries];
+     (updated[index] as any)[field] = value;
+     setResumeEntries(updated);
+   };
+ 
+   const handleDeleteEntry = async (index: number) => {
+     const entry = resumeEntries[index];
+     if (entry.id) {
+       await supabase.from("resume_entries").delete().eq("id", entry.id);
+     }
+     setResumeEntries(resumeEntries.filter((_, i) => i !== index));
+     toast({ title: "Entry removed" });
+   };
+ 
+   const handleSaveEntries = async () => {
+     for (const entry of resumeEntries) {
+       if (entry.id) {
+         await supabase.from("resume_entries").update({
+           title: entry.title,
+           organization: entry.organization,
+           period: entry.period,
+           description: entry.description,
+           display_order: entry.display_order,
+         }).eq("id", entry.id);
+       } else if (entry.title && entry.organization) {
+         const { data } = await supabase.from("resume_entries").insert({
+           type: entry.type,
+           title: entry.title,
+           organization: entry.organization,
+           period: entry.period,
+           description: entry.description,
+           display_order: entry.display_order,
+         }).select().single();
+         if (data) {
+           entry.id = data.id;
+         }
+       }
+     }
+     toast({ title: "Resume entries saved" });
+   };
+ 
+   const handleAddSkill = () => {
+     if (skillInput.trim()) {
+       setProfile({ ...profile, skills: [...(profile.skills || []), skillInput.trim()] });
+       setSkillInput("");
+     }
+   };
+ 
+   const handleRemoveSkill = (index: number) => {
+     const updated = [...(profile.skills || [])];
+     updated.splice(index, 1);
+     setProfile({ ...profile, skills: updated });
+   };
 
   if (isLoading) {
     return <div className="animate-pulse">Loading profile...</div>;
@@ -207,6 +306,34 @@ export function ProfilePanel() {
           </CardContent>
         </Card>
 
+         {/* Hero Content */}
+         <Card>
+           <CardHeader>
+             <CardTitle className="text-lg">Hero Section</CardTitle>
+           </CardHeader>
+           <CardContent className="space-y-4">
+             <div className="space-y-2">
+               <Label htmlFor="hero_tagline">Tagline</Label>
+               <Input
+                 id="hero_tagline"
+                 value={profile.hero_tagline || ""}
+                 onChange={(e) => setProfile({ ...profile, hero_tagline: e.target.value })}
+                 placeholder="Your Creative Digital Space"
+               />
+             </div>
+             <div className="space-y-2">
+               <Label htmlFor="hero_subtitle">Subtitle</Label>
+               <Textarea
+                 id="hero_subtitle"
+                 value={profile.hero_subtitle || ""}
+                 onChange={(e) => setProfile({ ...profile, hero_subtitle: e.target.value })}
+                 placeholder="Explore my collection of apps, AI experiments..."
+                 rows={3}
+               />
+             </div>
+           </CardContent>
+         </Card>
+ 
         {/* Basic Info */}
         <Card>
           <CardHeader>
@@ -256,6 +383,42 @@ export function ProfilePanel() {
           </CardContent>
         </Card>
 
+         {/* Skills */}
+         <Card>
+           <CardHeader>
+             <CardTitle className="text-lg">Skills</CardTitle>
+           </CardHeader>
+           <CardContent className="space-y-4">
+             <div className="flex gap-2">
+               <Input
+                 value={skillInput}
+                 onChange={(e) => setSkillInput(e.target.value)}
+                 placeholder="Add skill (e.g., Development: Building web apps)"
+                 onKeyDown={(e) => e.key === "Enter" && (e.preventDefault(), handleAddSkill())}
+               />
+               <Button variant="outline" onClick={handleAddSkill}>
+                 <Plus className="h-4 w-4" />
+               </Button>
+             </div>
+             <div className="flex flex-wrap gap-2">
+               {(profile.skills || []).map((skill, index) => (
+                 <span
+                   key={index}
+                   className="px-3 py-1 bg-secondary text-secondary-foreground rounded-full text-sm flex items-center gap-2"
+                 >
+                   {skill}
+                   <button onClick={() => handleRemoveSkill(index)} className="hover:text-destructive">
+                     <Trash2 className="h-3 w-3" />
+                   </button>
+                 </span>
+               ))}
+             </div>
+             <p className="text-xs text-muted-foreground">
+               Format: "Label: Description" (e.g., "Development: Building web apps")
+             </p>
+           </CardContent>
+         </Card>
+ 
         {/* Social Links */}
         <Card>
           <CardHeader>
@@ -291,6 +454,103 @@ export function ProfilePanel() {
             </div>
           </CardContent>
         </Card>
+         
+         {/* Experience Entries */}
+         <Card>
+           <CardHeader className="flex flex-row items-center justify-between">
+             <CardTitle className="text-lg">Experience</CardTitle>
+             <Button variant="outline" size="sm" onClick={() => handleAddEntry("experience")}>
+               <Plus className="h-4 w-4 mr-1" /> Add
+             </Button>
+           </CardHeader>
+           <CardContent className="space-y-4">
+             {resumeEntries.filter(e => e.type === "experience").map((entry, idx) => {
+               const realIndex = resumeEntries.indexOf(entry);
+               return (
+               <div key={realIndex} className="p-4 border rounded-lg space-y-3">
+                 <div className="flex justify-between">
+                   <Label>Experience #{idx + 1}</Label>
+                   <Button variant="ghost" size="sm" onClick={() => handleDeleteEntry(realIndex)}>
+                     <Trash2 className="h-4 w-4 text-destructive" />
+                   </Button>
+                 </div>
+                 <div className="grid sm:grid-cols-2 gap-3">
+                   <Input
+                     placeholder="Job Title"
+                     value={entry.title}
+                     onChange={(e) => handleUpdateEntry(realIndex, "title", e.target.value)}
+                   />
+                   <Input
+                     placeholder="Company"
+                     value={entry.organization}
+                     onChange={(e) => handleUpdateEntry(realIndex, "organization", e.target.value)}
+                   />
+                 </div>
+                 <Input
+                   placeholder="Period (e.g., 2022 - Present)"
+                   value={entry.period}
+                   onChange={(e) => handleUpdateEntry(realIndex, "period", e.target.value)}
+                 />
+                 <Textarea
+                   placeholder="Description"
+                   value={entry.description || ""}
+                   onChange={(e) => handleUpdateEntry(realIndex, "description", e.target.value)}
+                   rows={2}
+                 />
+               </div>
+             )})}
+             {resumeEntries.filter(e => e.type === "experience").length === 0 && (
+               <p className="text-muted-foreground text-sm">No experience entries yet.</p>
+             )}
+           </CardContent>
+         </Card>
+ 
+         {/* Education Entries */}
+         <Card>
+           <CardHeader className="flex flex-row items-center justify-between">
+             <CardTitle className="text-lg">Education</CardTitle>
+             <Button variant="outline" size="sm" onClick={() => handleAddEntry("education")}>
+               <Plus className="h-4 w-4 mr-1" /> Add
+             </Button>
+           </CardHeader>
+           <CardContent className="space-y-4">
+             {resumeEntries.filter(e => e.type === "education").map((entry, idx) => {
+               const realIndex = resumeEntries.indexOf(entry);
+               return (
+               <div key={realIndex} className="p-4 border rounded-lg space-y-3">
+                 <div className="flex justify-between">
+                   <Label>Education #{idx + 1}</Label>
+                   <Button variant="ghost" size="sm" onClick={() => handleDeleteEntry(realIndex)}>
+                     <Trash2 className="h-4 w-4 text-destructive" />
+                   </Button>
+                 </div>
+                 <div className="grid sm:grid-cols-2 gap-3">
+                   <Input
+                     placeholder="Degree / Certificate"
+                     value={entry.title}
+                     onChange={(e) => handleUpdateEntry(realIndex, "title", e.target.value)}
+                   />
+                   <Input
+                     placeholder="School / Institution"
+                     value={entry.organization}
+                     onChange={(e) => handleUpdateEntry(realIndex, "organization", e.target.value)}
+                   />
+                 </div>
+                 <Input
+                   placeholder="Period (e.g., 2016 - 2020)"
+                   value={entry.period}
+                   onChange={(e) => handleUpdateEntry(realIndex, "period", e.target.value)}
+                 />
+               </div>
+             )})}
+             {resumeEntries.filter(e => e.type === "education").length === 0 && (
+               <p className="text-muted-foreground text-sm">No education entries yet.</p>
+             )}
+             <Button onClick={handleSaveEntries} variant="outline" className="w-full mt-4">
+               Save Resume Entries
+             </Button>
+           </CardContent>
+         </Card>
 
         {/* Resume */}
         <Card>

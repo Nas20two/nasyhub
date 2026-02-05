@@ -1,4 +1,4 @@
-import { useState } from "react";
+ import { useState, useEffect } from "react";
 import { Send, Mail, MapPin, Github, Linkedin, Twitter } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -6,35 +6,83 @@ import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
+ import { supabase } from "@/integrations/supabase/client";
 
-const socialLinks = [
-  { icon: Github, label: "GitHub", href: "#" },
-  { icon: Linkedin, label: "LinkedIn", href: "#" },
-  { icon: Twitter, label: "Twitter", href: "#" },
-];
+ interface ContactInfo {
+   email: string | null;
+   location: string | null;
+   github_url: string | null;
+   linkedin_url: string | null;
+   twitter_url: string | null;
+ }
 
 export function ContactSection() {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
+   const [contactInfo, setContactInfo] = useState<ContactInfo>({
+     email: "hello@nasyhub.com",
+     location: "Your City, Country",
+     github_url: null,
+     linkedin_url: null,
+     twitter_url: null,
+   });
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     message: "",
   });
+ 
+   useEffect(() => {
+     const fetchContactInfo = async () => {
+       const { data } = await supabase
+         .from("profiles")
+         .select("email, location, github_url, linkedin_url, twitter_url")
+         .limit(1)
+         .single();
+       
+       if (data) {
+         setContactInfo({
+           email: data.email || contactInfo.email,
+           location: data.location || contactInfo.location,
+           github_url: data.github_url,
+           linkedin_url: data.linkedin_url,
+           twitter_url: data.twitter_url,
+         });
+       }
+     };
+     fetchContactInfo();
+   }, []);
+ 
+   const socialLinks = [
+     { icon: Github, label: "GitHub", href: contactInfo.github_url },
+     { icon: Linkedin, label: "LinkedIn", href: contactInfo.linkedin_url },
+     { icon: Twitter, label: "Twitter", href: contactInfo.twitter_url },
+   ].filter(link => link.href);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
 
-    // Placeholder - will be connected to database
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+     const { error } = await supabase.from("contact_messages").insert({
+       name: formData.name,
+       email: formData.email,
+       message: formData.message,
+     });
 
-    toast({
-      title: "Message sent!",
-      description: "Thank you for reaching out. I'll get back to you soon.",
-    });
+     if (error) {
+       toast({
+         title: "Error",
+         description: "Failed to send message. Please try again.",
+         variant: "destructive",
+       });
+     } else {
+       toast({
+         title: "Message sent!",
+         description: "Thank you for reaching out. I'll get back to you soon.",
+       });
+       setFormData({ name: "", email: "", message: "" });
+     }
 
-    setFormData({ name: "", email: "", message: "" });
     setIsSubmitting(false);
   };
 
@@ -126,10 +174,10 @@ export function ContactSection() {
                     <div>
                       <p className="text-sm text-muted-foreground">Email</p>
                       <a
-                        href="mailto:hello@nasyhub.com"
+                         href={`mailto:${contactInfo.email}`}
                         className="font-medium hover:text-primary transition-colors"
                       >
-                        hello@nasyhub.com
+                         {contactInfo.email}
                       </a>
                     </div>
                   </div>
@@ -145,14 +193,15 @@ export function ContactSection() {
                     </div>
                     <div>
                       <p className="text-sm text-muted-foreground">Location</p>
-                      <p className="font-medium">Your City, Country</p>
+                       <p className="font-medium">{contactInfo.location}</p>
                     </div>
                   </div>
                 </CardContent>
               </Card>
 
               {/* Social Links */}
-              <Card className="border-none shadow-card">
+               {socialLinks.length > 0 && (
+               <Card className="border-none shadow-card">
                 <CardContent className="p-6">
                   <p className="text-sm text-muted-foreground mb-4">
                     Connect with me
@@ -173,6 +222,7 @@ export function ContactSection() {
                   </div>
                 </CardContent>
               </Card>
+               )}
             </div>
           </div>
         </div>
