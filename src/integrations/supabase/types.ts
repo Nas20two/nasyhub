@@ -192,10 +192,13 @@ export type Database = {
           display_name: string | null
           email: string | null
           github_url: string | null
+          hero_subtitle: string | null
+          hero_tagline: string | null
           id: string
           linkedin_url: string | null
           location: string | null
           resume_url: string | null
+          skills: string[] | null
           twitter_url: string | null
           updated_at: string
           user_id: string
@@ -207,10 +210,13 @@ export type Database = {
           display_name?: string | null
           email?: string | null
           github_url?: string | null
+          hero_subtitle?: string | null
+          hero_tagline?: string | null
           id?: string
           linkedin_url?: string | null
           location?: string | null
           resume_url?: string | null
+          skills?: string[] | null
           twitter_url?: string | null
           updated_at?: string
           user_id: string
@@ -222,10 +228,13 @@ export type Database = {
           display_name?: string | null
           email?: string | null
           github_url?: string | null
+          hero_subtitle?: string | null
+          hero_tagline?: string | null
           id?: string
           linkedin_url?: string | null
           location?: string | null
           resume_url?: string | null
+          skills?: string[] | null
           twitter_url?: string | null
           updated_at?: string
           user_id?: string
@@ -268,6 +277,42 @@ export type Database = {
           prototype_url?: string | null
           status?: string | null
           updated_at?: string
+        }
+        Relationships: []
+      }
+      resume_entries: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          display_order: number | null
+          id: string
+          organization: string
+          period: string
+          title: string
+          type: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          display_order?: number | null
+          id?: string
+          organization: string
+          period: string
+          title: string
+          type: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          display_order?: number | null
+          id?: string
+          organization?: string
+          period?: string
+          title?: string
+          type?: string
+          updated_at?: string | null
         }
         Relationships: []
       }

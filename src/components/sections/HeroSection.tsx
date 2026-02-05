@@ -1,7 +1,37 @@
-import { ArrowDown } from "lucide-react";
-import { Button } from "@/components/ui/button";
+ import { useEffect, useState } from "react";
+ import { ArrowDown } from "lucide-react";
+ import { Button } from "@/components/ui/button";
+ import { supabase } from "@/integrations/supabase/client";
+ 
+ interface HeroContent {
+   hero_tagline: string;
+   hero_subtitle: string;
+ }
 
 export function HeroSection() {
+   const [content, setContent] = useState<HeroContent>({
+     hero_tagline: "Your Creative Digital Space",
+     hero_subtitle: "Explore my collection of apps, AI experiments, artwork, and music. A warm corner of the internet where creativity meets technology.",
+   });
+ 
+   useEffect(() => {
+     const fetchContent = async () => {
+       const { data } = await supabase
+         .from("profiles")
+         .select("hero_tagline, hero_subtitle")
+         .limit(1)
+         .single();
+       
+       if (data) {
+         setContent({
+           hero_tagline: data.hero_tagline || content.hero_tagline,
+           hero_subtitle: data.hero_subtitle || content.hero_subtitle,
+         });
+       }
+     };
+     fetchContent();
+   }, []);
+ 
   const scrollToAbout = () => {
     document.querySelector("#about")?.scrollIntoView({ behavior: "smooth" });
   };
@@ -21,14 +51,13 @@ export function HeroSection() {
             <span className="text-gradient">NaSy Hub</span>
           </h1>
           
-          <p className="text-xl md:text-2xl lg:text-3xl text-muted-foreground mb-4 animate-fade-in-up" style={{ animationDelay: "0.2s" }}>
-            Your Creative Digital Space
-          </p>
-          
-          <p className="text-lg text-muted-foreground/80 max-w-2xl mx-auto mb-12 animate-fade-in-up" style={{ animationDelay: "0.4s" }}>
-            Explore my collection of apps, AI experiments, artwork, and music. 
-            A warm corner of the internet where creativity meets technology.
-          </p>
+           <p className="text-xl md:text-2xl lg:text-3xl text-muted-foreground mb-4 animate-fade-in-up" style={{ animationDelay: "0.2s" }}>
+             {content.hero_tagline}
+           </p>
+           
+           <p className="text-lg text-muted-foreground/80 max-w-2xl mx-auto mb-12 animate-fade-in-up" style={{ animationDelay: "0.4s" }}>
+             {content.hero_subtitle}
+           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 animate-fade-in-up" style={{ animationDelay: "0.6s" }}>
             <Button
