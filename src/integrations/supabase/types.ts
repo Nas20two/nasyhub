@@ -316,6 +316,39 @@ export type Database = {
         }
         Relationships: []
       }
+      resume_requests: {
+        Row: {
+          approved_at: string | null
+          created_at: string
+          download_token: string
+          id: string
+          notes: string | null
+          requester_email: string
+          requester_name: string
+          status: string
+        }
+        Insert: {
+          approved_at?: string | null
+          created_at?: string
+          download_token?: string
+          id?: string
+          notes?: string | null
+          requester_email: string
+          requester_name: string
+          status?: string
+        }
+        Update: {
+          approved_at?: string | null
+          created_at?: string
+          download_token?: string
+          id?: string
+          notes?: string | null
+          requester_email?: string
+          requester_name?: string
+          status?: string
+        }
+        Relationships: []
+      }
       spotify_playlists: {
         Row: {
           created_at: string
@@ -373,6 +406,42 @@ export type Database = {
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
           user_id?: string
+        }
+        Relationships: []
+      }
+      youtube_playlists: {
+        Row: {
+          created_at: string
+          description: string | null
+          display_order: number | null
+          embed_url: string | null
+          id: string
+          is_active: boolean | null
+          title: string
+          updated_at: string
+          youtube_url: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          display_order?: number | null
+          embed_url?: string | null
+          id?: string
+          is_active?: boolean | null
+          title: string
+          updated_at?: string
+          youtube_url: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          display_order?: number | null
+          embed_url?: string | null
+          id?: string
+          is_active?: boolean | null
+          title?: string
+          updated_at?: string
+          youtube_url?: string
         }
         Relationships: []
       }
