@@ -1,1 +1,4 @@
 project_id = "wzxveogdratuuxqixovz"
+
+[functions.send-resume-notification]
+verify_jwt = false

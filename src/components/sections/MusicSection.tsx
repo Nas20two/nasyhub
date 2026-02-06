@@ -1,64 +1,87 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Play, Pause, Music2, ExternalLink, Headphones } from "lucide-react";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
 
-// Placeholder data - will be replaced with database content
-const placeholderTracks = [
-  {
-    id: "1",
-    title: "Summer Vibes",
-    description: "Chill lo-fi beat perfect for relaxation",
-    category: "Original Beats",
-    audio_url: null,
-    duration: "3:24",
-  },
-  {
-    id: "2",
-    title: "Urban Nights",
-    description: "Dark trap instrumental with atmospheric elements",
-    category: "Original Beats",
-    audio_url: null,
-    duration: "2:58",
-  },
-  {
-    id: "3",
-    title: "Cinematic Rise",
-    description: "Sound design element for video production",
-    category: "Sound Design",
-    audio_url: null,
-    duration: "0:45",
-  },
-];
+interface Track {
+  id: string;
+  title: string;
+  description: string | null;
+  category: string | null;
+  audio_url: string | null;
+  duration: string | null;
+}
 
-const placeholderPlaylists = [
-  {
-    id: "1",
-    title: "Creative Flow",
-    description: "My go-to playlist for creative work sessions",
-    spotify_url: "https://open.spotify.com/playlist/example",
-    embed: true,
-    embed_url: "https://open.spotify.com/embed/playlist/37i9dQZF1DXcBWIGoYBM5M",
-  },
-  {
-    id: "2",
-    title: "Late Night Coding",
-    description: "Ambient and electronic tracks for focused work",
-    spotify_url: "https://open.spotify.com/playlist/example2",
-    embed: false,
-    embed_url: null,
-  },
-];
+interface SpotifyPlaylist {
+  id: string;
+  title: string;
+  description: string | null;
+  spotify_url: string;
+  embed_url: string | null;
+  use_embed: boolean | null;
+}
+
+interface YouTubePlaylist {
+  id: string;
+  title: string;
+  description: string | null;
+  youtube_url: string;
+  embed_url: string | null;
+}
 
 export function MusicSection() {
   const [playingTrack, setPlayingTrack] = useState<string | null>(null);
+  const [tracks, setTracks] = useState<Track[]>([]);
+  const [spotifyPlaylists, setSpotifyPlaylists] = useState<SpotifyPlaylist[]>([]);
+  const [youtubePlaylists, setYoutubePlaylists] = useState<YouTubePlaylist[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [audioRef, setAudioRef] = useState<HTMLAudioElement | null>(null);
 
-  const togglePlay = (trackId: string) => {
-    setPlayingTrack(playingTrack === trackId ? null : trackId);
+  useEffect(() => {
+    const fetchData = async () => {
+      const [tracksRes, spotifyRes, youtubeRes] = await Promise.all([
+        supabase.from("music_tracks").select("*").eq("is_active", true).order("display_order"),
+        supabase.from("spotify_playlists").select("*").eq("is_active", true).order("display_order"),
+        supabase.from("youtube_playlists").select("*").eq("is_active", true).order("display_order"),
+      ]);
+
+      if (!tracksRes.error) setTracks(tracksRes.data || []);
+      if (!spotifyRes.error) setSpotifyPlaylists(spotifyRes.data || []);
+      if (!youtubeRes.error) setYoutubePlaylists(youtubeRes.data || []);
+      setIsLoading(false);
+    };
+
+    fetchData();
+  }, []);
+
+  const togglePlay = (track: Track) => {
+    if (!track.audio_url) return;
+
+    if (playingTrack === track.id) {
+      audioRef?.pause();
+      setPlayingTrack(null);
+    } else {
+      if (audioRef) audioRef.pause();
+      const audio = new Audio(track.audio_url);
+      audio.play();
+      audio.onended = () => setPlayingTrack(null);
+      setAudioRef(audio);
+      setPlayingTrack(track.id);
+    }
   };
+
+  // Show placeholder content if no data from database
+  const displayTracks = tracks.length > 0 ? tracks : [
+    { id: "1", title: "Summer Vibes", description: "Chill lo-fi beat perfect for relaxation", category: "Original Beats", audio_url: null, duration: "3:24" },
+    { id: "2", title: "Urban Nights", description: "Dark trap instrumental with atmospheric elements", category: "Original Beats", audio_url: null, duration: "2:58" },
+  ];
+
+  const hasSpotifyPlaylists = spotifyPlaylists.length > 0;
+  const hasYoutubePlaylists = youtubePlaylists.length > 0;
 
   return (
     <section id="music" className="py-24 bg-card">
@@ -80,14 +103,15 @@ export function MusicSection() {
 
           {/* Tabs */}
           <Tabs defaultValue="tracks" className="w-full">
-            <TabsList className="grid w-full max-w-md mx-auto grid-cols-2 mb-8">
+            <TabsList className="grid w-full max-w-lg mx-auto grid-cols-3 mb-8">
               <TabsTrigger value="tracks">My Tracks</TabsTrigger>
-              <TabsTrigger value="playlists">Playlists</TabsTrigger>
+              <TabsTrigger value="spotify">Spotify</TabsTrigger>
+              <TabsTrigger value="youtube">YouTube</TabsTrigger>
             </TabsList>
 
             {/* Original Tracks */}
             <TabsContent value="tracks" className="space-y-4">
-              {placeholderTracks.map((track) => (
+              {displayTracks.map((track) => (
                 <Card key={track.id} className="overflow-hidden border-none shadow-card hover:shadow-soft transition-all">
                   <div className="flex items-center gap-4 p-4">
                     {/* Play Button */}
@@ -96,9 +120,11 @@ export function MusicSection() {
                       size="icon"
                       className={cn(
                         "rounded-full shrink-0 w-12 h-12",
-                        playingTrack === track.id && "gradient-accent text-primary-foreground"
+                        playingTrack === track.id && "gradient-accent text-primary-foreground",
+                        !track.audio_url && "opacity-50 cursor-not-allowed"
                       )}
-                      onClick={() => togglePlay(track.id)}
+                      onClick={() => togglePlay(track)}
+                      disabled={!track.audio_url}
                     >
                       {playingTrack === track.id ? (
                         <Pause className="h-5 w-5" />
@@ -145,60 +171,135 @@ export function MusicSection() {
                 </Card>
               ))}
 
-              {/* Note about audio */}
-              <p className="text-center text-sm text-muted-foreground mt-8">
-                <Music2 className="inline-block w-4 h-4 mr-1" />
-                Audio playback will be available once tracks are uploaded in the admin panel.
-              </p>
+              {tracks.length === 0 && (
+                <p className="text-center text-sm text-muted-foreground mt-8">
+                  <Music2 className="inline-block w-4 h-4 mr-1" />
+                  Audio playback will be available once tracks are uploaded in the admin panel.
+                </p>
+              )}
             </TabsContent>
 
-            {/* Playlists */}
-            <TabsContent value="playlists">
-              <div className="grid md:grid-cols-2 gap-6">
-                {placeholderPlaylists.map((playlist) => (
-                  <Card key={playlist.id} className="overflow-hidden border-none shadow-card">
-                    {playlist.embed ? (
-                      <div className="aspect-[4/5] bg-muted">
-                        <iframe
-                          src={playlist.embed_url}
-                          width="100%"
-                          height="100%"
-                          allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
-                          loading="lazy"
-                          className="border-0"
-                        />
-                      </div>
-                    ) : (
-                      <>
-                        <CardHeader>
-                          <div className="flex items-center gap-3">
-                            <div className="w-16 h-16 rounded-lg bg-gradient-to-br from-primary/20 to-accent flex items-center justify-center">
-                              <Music2 className="w-8 h-8 text-primary" />
+            {/* Spotify Playlists */}
+            <TabsContent value="spotify">
+              {!hasSpotifyPlaylists ? (
+                <div className="text-center py-12 text-muted-foreground">
+                  <Music2 className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                  <p>No Spotify playlists added yet.</p>
+                </div>
+              ) : (
+                <div className="grid md:grid-cols-2 gap-6">
+                  {spotifyPlaylists.map((playlist) => (
+                    <Card key={playlist.id} className="overflow-hidden border-none shadow-card">
+                      {playlist.use_embed && playlist.embed_url ? (
+                        <div className="aspect-[4/5] bg-muted">
+                          <iframe
+                            src={playlist.embed_url}
+                            width="100%"
+                            height="100%"
+                            allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+                            loading="lazy"
+                            className="border-0"
+                          />
+                        </div>
+                      ) : (
+                        <>
+                          <CardHeader>
+                            <div className="flex items-center gap-3">
+                              <div className="w-16 h-16 rounded-lg bg-gradient-to-br from-primary/20 to-accent flex items-center justify-center">
+                                <Music2 className="w-8 h-8 text-primary" />
+                              </div>
+                              <div>
+                                <h3 className="font-semibold">{playlist.title}</h3>
+                                <p className="text-sm text-muted-foreground">
+                                  {playlist.description}
+                                </p>
+                              </div>
                             </div>
-                            <div>
-                              <h3 className="font-semibold">{playlist.title}</h3>
-                              <p className="text-sm text-muted-foreground">
-                                {playlist.description}
-                              </p>
+                          </CardHeader>
+                          <CardFooter>
+                            <Button variant="outline" className="w-full" asChild>
+                              <a
+                                href={playlist.spotify_url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                              >
+                                Open in Spotify <ExternalLink className="ml-2 h-4 w-4" />
+                              </a>
+                            </Button>
+                          </CardFooter>
+                        </>
+                      )}
+                    </Card>
+                  ))}
+                </div>
+              )}
+            </TabsContent>
+
+            {/* YouTube Playlists */}
+            <TabsContent value="youtube">
+              {!hasYoutubePlaylists ? (
+                <div className="text-center py-12 text-muted-foreground">
+                  <Music2 className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                  <p>No YouTube playlists added yet.</p>
+                </div>
+              ) : (
+                <div className="grid md:grid-cols-2 gap-6">
+                  {youtubePlaylists.map((playlist) => (
+                    <Card key={playlist.id} className="overflow-hidden border-none shadow-card">
+                      {playlist.embed_url ? (
+                        <div className="aspect-video bg-muted">
+                          <iframe
+                            src={playlist.embed_url}
+                            width="100%"
+                            height="100%"
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                            allowFullScreen
+                            loading="lazy"
+                            className="border-0"
+                          />
+                        </div>
+                      ) : (
+                        <>
+                          <CardHeader>
+                            <div className="flex items-center gap-3">
+                              <div className="w-16 h-16 rounded-lg bg-gradient-to-br from-destructive/20 to-accent flex items-center justify-center">
+                                <span className="text-2xl">▶️</span>
+                              </div>
+                              <div>
+                                <h3 className="font-semibold">{playlist.title}</h3>
+                                <p className="text-sm text-muted-foreground">
+                                  {playlist.description}
+                                </p>
+                              </div>
                             </div>
+                          </CardHeader>
+                          <CardFooter>
+                            <Button variant="outline" className="w-full" asChild>
+                              <a
+                                href={playlist.youtube_url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                              >
+                                Open in YouTube <ExternalLink className="ml-2 h-4 w-4" />
+                              </a>
+                            </Button>
+                          </CardFooter>
+                        </>
+                      )}
+                      {playlist.embed_url && (
+                        <CardFooter className="pt-0">
+                          <div className="w-full">
+                            <h3 className="font-semibold mb-1">{playlist.title}</h3>
+                            {playlist.description && (
+                              <p className="text-sm text-muted-foreground">{playlist.description}</p>
+                            )}
                           </div>
-                        </CardHeader>
-                        <CardFooter>
-                          <Button variant="outline" className="w-full" asChild>
-                            <a
-                              href={playlist.spotify_url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                            >
-                              Open in Spotify <ExternalLink className="ml-2 h-4 w-4" />
-                            </a>
-                          </Button>
                         </CardFooter>
-                      </>
-                    )}
-                  </Card>
-                ))}
-              </div>
+                      )}
+                    </Card>
+                  ))}
+                </div>
+              )}
             </TabsContent>
           </Tabs>
         </div>

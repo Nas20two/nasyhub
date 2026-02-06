@@ -44,7 +44,7 @@ interface Track {
   is_active: boolean;
 }
 
-interface Playlist {
+interface SpotifyPlaylist {
   id: string;
   title: string;
   description: string | null;
@@ -54,11 +54,36 @@ interface Playlist {
   is_active: boolean;
 }
 
+interface YouTubePlaylist {
+  id: string;
+  title: string;
+  description: string | null;
+  youtube_url: string;
+  embed_url: string | null;
+  is_active: boolean;
+}
+
+// Helper to convert YouTube URL to embed URL
+const getYouTubeEmbedUrl = (url: string): string => {
+  // Handle playlist URLs
+  const playlistMatch = url.match(/[?&]list=([^&]+)/);
+  if (playlistMatch) {
+    return `https://www.youtube.com/embed/videoseries?list=${playlistMatch[1]}`;
+  }
+  // Handle video URLs
+  const videoMatch = url.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([^&?]+)/);
+  if (videoMatch) {
+    return `https://www.youtube.com/embed/${videoMatch[1]}`;
+  }
+  return "";
+};
+
 export function MusicPanel() {
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [tracks, setTracks] = useState<Track[]>([]);
-  const [playlists, setPlaylists] = useState<Playlist[]>([]);
+  const [spotifyPlaylists, setSpotifyPlaylists] = useState<SpotifyPlaylist[]>([]);
+  const [youtubePlaylists, setYoutubePlaylists] = useState<YouTubePlaylist[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("tracks");
   
@@ -76,11 +101,11 @@ export function MusicPanel() {
     is_active: true,
   });
 
-  // Playlist dialog state
-  const [isPlaylistDialogOpen, setIsPlaylistDialogOpen] = useState(false);
-  const [editingPlaylist, setEditingPlaylist] = useState<Playlist | null>(null);
-  const [deletePlaylistId, setDeletePlaylistId] = useState<string | null>(null);
-  const [playlistFormData, setPlaylistFormData] = useState({
+  // Spotify playlist dialog state
+  const [isSpotifyDialogOpen, setIsSpotifyDialogOpen] = useState(false);
+  const [editingSpotifyPlaylist, setEditingSpotifyPlaylist] = useState<SpotifyPlaylist | null>(null);
+  const [deleteSpotifyId, setDeleteSpotifyId] = useState<string | null>(null);
+  const [spotifyFormData, setSpotifyFormData] = useState({
     title: "",
     description: "",
     spotify_url: "",
@@ -89,14 +114,28 @@ export function MusicPanel() {
     is_active: true,
   });
 
+  // YouTube playlist dialog state
+  const [isYouTubeDialogOpen, setIsYouTubeDialogOpen] = useState(false);
+  const [editingYouTubePlaylist, setEditingYouTubePlaylist] = useState<YouTubePlaylist | null>(null);
+  const [deleteYouTubeId, setDeleteYouTubeId] = useState<string | null>(null);
+  const [youtubeFormData, setYoutubeFormData] = useState({
+    title: "",
+    description: "",
+    youtube_url: "",
+    embed_url: "",
+    is_active: true,
+  });
+
   const fetchData = async () => {
-    const [tracksRes, playlistsRes] = await Promise.all([
+    const [tracksRes, spotifyRes, youtubeRes] = await Promise.all([
       supabase.from("music_tracks").select("*").order("display_order", { ascending: true }),
       supabase.from("spotify_playlists").select("*").order("display_order", { ascending: true }),
+      supabase.from("youtube_playlists").select("*").order("display_order", { ascending: true }),
     ]);
 
     if (!tracksRes.error) setTracks(tracksRes.data || []);
-    if (!playlistsRes.error) setPlaylists(playlistsRes.data || []);
+    if (!spotifyRes.error) setSpotifyPlaylists(spotifyRes.data || []);
+    if (!youtubeRes.error) setYoutubePlaylists(youtubeRes.data || []);
     setIsLoading(false);
   };
 
@@ -205,10 +244,10 @@ export function MusicPanel() {
     setDeleteTrackId(null);
   };
 
-  // Playlist CRUD
-  const openCreatePlaylistDialog = () => {
-    setEditingPlaylist(null);
-    setPlaylistFormData({
+  // Spotify CRUD
+  const openCreateSpotifyDialog = () => {
+    setEditingSpotifyPlaylist(null);
+    setSpotifyFormData({
       title: "",
       description: "",
       spotify_url: "",
@@ -216,12 +255,12 @@ export function MusicPanel() {
       use_embed: false,
       is_active: true,
     });
-    setIsPlaylistDialogOpen(true);
+    setIsSpotifyDialogOpen(true);
   };
 
-  const openEditPlaylistDialog = (playlist: Playlist) => {
-    setEditingPlaylist(playlist);
-    setPlaylistFormData({
+  const openEditSpotifyDialog = (playlist: SpotifyPlaylist) => {
+    setEditingSpotifyPlaylist(playlist);
+    setSpotifyFormData({
       title: playlist.title,
       description: playlist.description || "",
       spotify_url: playlist.spotify_url,
@@ -229,36 +268,36 @@ export function MusicPanel() {
       use_embed: playlist.use_embed,
       is_active: playlist.is_active,
     });
-    setIsPlaylistDialogOpen(true);
+    setIsSpotifyDialogOpen(true);
   };
 
-  const handleSavePlaylist = async () => {
+  const handleSaveSpotifyPlaylist = async () => {
     const playlistData = {
-      title: playlistFormData.title,
-      description: playlistFormData.description || null,
-      spotify_url: playlistFormData.spotify_url,
-      embed_url: playlistFormData.embed_url || null,
-      use_embed: playlistFormData.use_embed,
-      is_active: playlistFormData.is_active,
+      title: spotifyFormData.title,
+      description: spotifyFormData.description || null,
+      spotify_url: spotifyFormData.spotify_url,
+      embed_url: spotifyFormData.embed_url || null,
+      use_embed: spotifyFormData.use_embed,
+      is_active: spotifyFormData.is_active,
     };
 
-    if (editingPlaylist) {
+    if (editingSpotifyPlaylist) {
       const { error } = await supabase
         .from("spotify_playlists")
         .update(playlistData)
-        .eq("id", editingPlaylist.id);
+        .eq("id", editingSpotifyPlaylist.id);
 
       if (error) {
         toast({ title: "Error", description: error.message, variant: "destructive" });
       } else {
         toast({ title: "Success", description: "Playlist updated" });
         fetchData();
-        setIsPlaylistDialogOpen(false);
+        setIsSpotifyDialogOpen(false);
       }
     } else {
       const { error } = await supabase.from("spotify_playlists").insert({
         ...playlistData,
-        display_order: playlists.length,
+        display_order: spotifyPlaylists.length,
       });
 
       if (error) {
@@ -266,21 +305,101 @@ export function MusicPanel() {
       } else {
         toast({ title: "Success", description: "Playlist created" });
         fetchData();
-        setIsPlaylistDialogOpen(false);
+        setIsSpotifyDialogOpen(false);
       }
     }
   };
 
-  const handleDeletePlaylist = async () => {
-    if (!deletePlaylistId) return;
-    const { error } = await supabase.from("spotify_playlists").delete().eq("id", deletePlaylistId);
+  const handleDeleteSpotifyPlaylist = async () => {
+    if (!deleteSpotifyId) return;
+    const { error } = await supabase.from("spotify_playlists").delete().eq("id", deleteSpotifyId);
     if (error) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
     } else {
       toast({ title: "Success", description: "Playlist deleted" });
       fetchData();
     }
-    setDeletePlaylistId(null);
+    setDeleteSpotifyId(null);
+  };
+
+  // YouTube CRUD
+  const openCreateYouTubeDialog = () => {
+    setEditingYouTubePlaylist(null);
+    setYoutubeFormData({
+      title: "",
+      description: "",
+      youtube_url: "",
+      embed_url: "",
+      is_active: true,
+    });
+    setIsYouTubeDialogOpen(true);
+  };
+
+  const openEditYouTubeDialog = (playlist: YouTubePlaylist) => {
+    setEditingYouTubePlaylist(playlist);
+    setYoutubeFormData({
+      title: playlist.title,
+      description: playlist.description || "",
+      youtube_url: playlist.youtube_url,
+      embed_url: playlist.embed_url || "",
+      is_active: playlist.is_active,
+    });
+    setIsYouTubeDialogOpen(true);
+  };
+
+  const handleYouTubeUrlChange = (url: string) => {
+    const embedUrl = getYouTubeEmbedUrl(url);
+    setYoutubeFormData({ ...youtubeFormData, youtube_url: url, embed_url: embedUrl });
+  };
+
+  const handleSaveYouTubePlaylist = async () => {
+    const playlistData = {
+      title: youtubeFormData.title,
+      description: youtubeFormData.description || null,
+      youtube_url: youtubeFormData.youtube_url,
+      embed_url: youtubeFormData.embed_url || null,
+      is_active: youtubeFormData.is_active,
+    };
+
+    if (editingYouTubePlaylist) {
+      const { error } = await supabase
+        .from("youtube_playlists")
+        .update(playlistData)
+        .eq("id", editingYouTubePlaylist.id);
+
+      if (error) {
+        toast({ title: "Error", description: error.message, variant: "destructive" });
+      } else {
+        toast({ title: "Success", description: "YouTube playlist updated" });
+        fetchData();
+        setIsYouTubeDialogOpen(false);
+      }
+    } else {
+      const { error } = await supabase.from("youtube_playlists").insert({
+        ...playlistData,
+        display_order: youtubePlaylists.length,
+      });
+
+      if (error) {
+        toast({ title: "Error", description: error.message, variant: "destructive" });
+      } else {
+        toast({ title: "Success", description: "YouTube playlist created" });
+        fetchData();
+        setIsYouTubeDialogOpen(false);
+      }
+    }
+  };
+
+  const handleDeleteYouTubePlaylist = async () => {
+    if (!deleteYouTubeId) return;
+    const { error } = await supabase.from("youtube_playlists").delete().eq("id", deleteYouTubeId);
+    if (error) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+    } else {
+      toast({ title: "Success", description: "YouTube playlist deleted" });
+      fetchData();
+    }
+    setDeleteYouTubeId(null);
   };
 
   if (isLoading) {
@@ -299,7 +418,8 @@ export function MusicPanel() {
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="mb-6">
           <TabsTrigger value="tracks">My Tracks</TabsTrigger>
-          <TabsTrigger value="playlists">Spotify Playlists</TabsTrigger>
+          <TabsTrigger value="spotify">Spotify Playlists</TabsTrigger>
+          <TabsTrigger value="youtube">YouTube Playlists</TabsTrigger>
         </TabsList>
 
         {/* Tracks Tab */}
@@ -360,20 +480,20 @@ export function MusicPanel() {
           )}
         </TabsContent>
 
-        {/* Playlists Tab */}
-        <TabsContent value="playlists">
+        {/* Spotify Tab */}
+        <TabsContent value="spotify">
           <div className="flex justify-end mb-4">
-            <Button onClick={openCreatePlaylistDialog} className="gradient-accent">
+            <Button onClick={openCreateSpotifyDialog} className="gradient-accent">
               <Plus className="h-4 w-4 mr-2" />
-              Add Playlist
+              Add Spotify Playlist
             </Button>
           </div>
 
-          {playlists.length === 0 ? (
+          {spotifyPlaylists.length === 0 ? (
             <Card className="border-dashed">
               <CardContent className="flex flex-col items-center justify-center py-12">
-                <p className="text-muted-foreground mb-4">No playlists yet</p>
-                <Button onClick={openCreatePlaylistDialog} variant="outline">
+                <p className="text-muted-foreground mb-4">No Spotify playlists yet</p>
+                <Button onClick={openCreateSpotifyDialog} variant="outline">
                   <Plus className="h-4 w-4 mr-2" />
                   Add your first playlist
                 </Button>
@@ -381,7 +501,7 @@ export function MusicPanel() {
             </Card>
           ) : (
             <div className="grid gap-4">
-              {playlists.map((playlist) => (
+              {spotifyPlaylists.map((playlist) => (
                 <Card key={playlist.id} className={!playlist.is_active ? "opacity-60" : ""}>
                   <CardContent className="flex items-center gap-4 p-4">
                     <div className="w-12 h-12 rounded-lg bg-secondary flex items-center justify-center shrink-0">
@@ -406,14 +526,79 @@ export function MusicPanel() {
                           <ExternalLink className="h-4 w-4" />
                         </a>
                       </Button>
-                      <Button variant="ghost" size="icon" onClick={() => openEditPlaylistDialog(playlist)}>
+                      <Button variant="ghost" size="icon" onClick={() => openEditSpotifyDialog(playlist)}>
                         <Pencil className="h-4 w-4" />
                       </Button>
                       <Button
                         variant="ghost"
                         size="icon"
                         className="text-destructive"
-                        onClick={() => setDeletePlaylistId(playlist.id)}
+                        onClick={() => setDeleteSpotifyId(playlist.id)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+        </TabsContent>
+
+        {/* YouTube Tab */}
+        <TabsContent value="youtube">
+          <div className="flex justify-end mb-4">
+            <Button onClick={openCreateYouTubeDialog} className="gradient-accent">
+              <Plus className="h-4 w-4 mr-2" />
+              Add YouTube Playlist
+            </Button>
+          </div>
+
+          {youtubePlaylists.length === 0 ? (
+            <Card className="border-dashed">
+              <CardContent className="flex flex-col items-center justify-center py-12">
+                <p className="text-muted-foreground mb-4">No YouTube playlists yet</p>
+                <Button onClick={openCreateYouTubeDialog} variant="outline">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add your first YouTube playlist
+                </Button>
+              </CardContent>
+            </Card>
+          ) : (
+            <div className="grid gap-4">
+              {youtubePlaylists.map((playlist) => (
+                <Card key={playlist.id} className={!playlist.is_active ? "opacity-60" : ""}>
+                  <CardContent className="flex items-center gap-4 p-4">
+                    <div className="w-12 h-12 rounded-lg bg-secondary flex items-center justify-center shrink-0">
+                      <span className="text-2xl">▶️</span>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2">
+                        <h3 className="font-semibold truncate">{playlist.title}</h3>
+                        {playlist.embed_url && (
+                          <span className="text-xs px-2 py-0.5 rounded-full bg-secondary">
+                            Embedded
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-sm text-muted-foreground truncate">
+                        {playlist.description || "No description"}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <Button variant="ghost" size="icon" asChild>
+                        <a href={playlist.youtube_url} target="_blank" rel="noopener noreferrer">
+                          <ExternalLink className="h-4 w-4" />
+                        </a>
+                      </Button>
+                      <Button variant="ghost" size="icon" onClick={() => openEditYouTubeDialog(playlist)}>
+                        <Pencil className="h-4 w-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="text-destructive"
+                        onClick={() => setDeleteYouTubeId(playlist.id)}
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
@@ -524,28 +709,28 @@ export function MusicPanel() {
         </DialogContent>
       </Dialog>
 
-      {/* Playlist Dialog */}
-      <Dialog open={isPlaylistDialogOpen} onOpenChange={setIsPlaylistDialogOpen}>
+      {/* Spotify Playlist Dialog */}
+      <Dialog open={isSpotifyDialogOpen} onOpenChange={setIsSpotifyDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{editingPlaylist ? "Edit Playlist" : "Add Spotify Playlist"}</DialogTitle>
+            <DialogTitle>{editingSpotifyPlaylist ? "Edit Playlist" : "Add Spotify Playlist"}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="title">Title</Label>
+              <Label htmlFor="spotify-title">Title</Label>
               <Input
-                id="title"
-                value={playlistFormData.title}
-                onChange={(e) => setPlaylistFormData({ ...playlistFormData, title: e.target.value })}
+                id="spotify-title"
+                value={spotifyFormData.title}
+                onChange={(e) => setSpotifyFormData({ ...spotifyFormData, title: e.target.value })}
                 placeholder="Playlist title"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="description">Description</Label>
+              <Label htmlFor="spotify-description">Description</Label>
               <Textarea
-                id="description"
-                value={playlistFormData.description}
-                onChange={(e) => setPlaylistFormData({ ...playlistFormData, description: e.target.value })}
+                id="spotify-description"
+                value={spotifyFormData.description}
+                onChange={(e) => setSpotifyFormData({ ...spotifyFormData, description: e.target.value })}
                 placeholder="Brief description"
                 rows={2}
               />
@@ -554,45 +739,114 @@ export function MusicPanel() {
               <Label htmlFor="spotify_url">Spotify URL</Label>
               <Input
                 id="spotify_url"
-                value={playlistFormData.spotify_url}
-                onChange={(e) => setPlaylistFormData({ ...playlistFormData, spotify_url: e.target.value })}
+                value={spotifyFormData.spotify_url}
+                onChange={(e) => setSpotifyFormData({ ...spotifyFormData, spotify_url: e.target.value })}
                 placeholder="https://open.spotify.com/playlist/..."
               />
             </div>
             <div className="flex items-center gap-2">
               <Switch
                 id="use_embed"
-                checked={playlistFormData.use_embed}
-                onCheckedChange={(checked) => setPlaylistFormData({ ...playlistFormData, use_embed: checked })}
+                checked={spotifyFormData.use_embed}
+                onCheckedChange={(checked) => setSpotifyFormData({ ...spotifyFormData, use_embed: checked })}
               />
               <Label htmlFor="use_embed">Use embedded player</Label>
             </div>
-            {playlistFormData.use_embed && (
+            {spotifyFormData.use_embed && (
               <div className="space-y-2">
                 <Label htmlFor="embed_url">Embed URL</Label>
                 <Input
                   id="embed_url"
-                  value={playlistFormData.embed_url}
-                  onChange={(e) => setPlaylistFormData({ ...playlistFormData, embed_url: e.target.value })}
+                  value={spotifyFormData.embed_url}
+                  onChange={(e) => setSpotifyFormData({ ...spotifyFormData, embed_url: e.target.value })}
                   placeholder="https://open.spotify.com/embed/playlist/..."
                 />
               </div>
             )}
             <div className="flex items-center gap-2">
               <Switch
-                id="is_active"
-                checked={playlistFormData.is_active}
-                onCheckedChange={(checked) => setPlaylistFormData({ ...playlistFormData, is_active: checked })}
+                id="spotify-is_active"
+                checked={spotifyFormData.is_active}
+                onCheckedChange={(checked) => setSpotifyFormData({ ...spotifyFormData, is_active: checked })}
               />
-              <Label htmlFor="is_active">Visible on portfolio</Label>
+              <Label htmlFor="spotify-is_active">Visible on portfolio</Label>
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsPlaylistDialogOpen(false)}>
+            <Button variant="outline" onClick={() => setIsSpotifyDialogOpen(false)}>
               Cancel
             </Button>
-            <Button onClick={handleSavePlaylist} className="gradient-accent">
-              {editingPlaylist ? "Update" : "Create"}
+            <Button onClick={handleSaveSpotifyPlaylist} className="gradient-accent">
+              {editingSpotifyPlaylist ? "Update" : "Create"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* YouTube Playlist Dialog */}
+      <Dialog open={isYouTubeDialogOpen} onOpenChange={setIsYouTubeDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{editingYouTubePlaylist ? "Edit YouTube Playlist" : "Add YouTube Playlist"}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="youtube-title">Title</Label>
+              <Input
+                id="youtube-title"
+                value={youtubeFormData.title}
+                onChange={(e) => setYoutubeFormData({ ...youtubeFormData, title: e.target.value })}
+                placeholder="Playlist title"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="youtube-description">Description</Label>
+              <Textarea
+                id="youtube-description"
+                value={youtubeFormData.description}
+                onChange={(e) => setYoutubeFormData({ ...youtubeFormData, description: e.target.value })}
+                placeholder="Brief description"
+                rows={2}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="youtube_url">YouTube URL</Label>
+              <Input
+                id="youtube_url"
+                value={youtubeFormData.youtube_url}
+                onChange={(e) => handleYouTubeUrlChange(e.target.value)}
+                placeholder="https://www.youtube.com/playlist?list=..."
+              />
+              <p className="text-xs text-muted-foreground">
+                Paste a YouTube playlist or video URL. The embed URL will be generated automatically.
+              </p>
+            </div>
+            {youtubeFormData.embed_url && (
+              <div className="space-y-2">
+                <Label htmlFor="youtube-embed_url">Embed URL (auto-generated)</Label>
+                <Input
+                  id="youtube-embed_url"
+                  value={youtubeFormData.embed_url}
+                  onChange={(e) => setYoutubeFormData({ ...youtubeFormData, embed_url: e.target.value })}
+                  placeholder="https://www.youtube.com/embed/..."
+                />
+              </div>
+            )}
+            <div className="flex items-center gap-2">
+              <Switch
+                id="youtube-is_active"
+                checked={youtubeFormData.is_active}
+                onCheckedChange={(checked) => setYoutubeFormData({ ...youtubeFormData, is_active: checked })}
+              />
+              <Label htmlFor="youtube-is_active">Visible on portfolio</Label>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsYouTubeDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleSaveYouTubePlaylist} className="gradient-accent">
+              {editingYouTubePlaylist ? "Update" : "Create"}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -614,15 +868,30 @@ export function MusicPanel() {
         </AlertDialogContent>
       </AlertDialog>
 
-      <AlertDialog open={!!deletePlaylistId} onOpenChange={() => setDeletePlaylistId(null)}>
+      <AlertDialog open={!!deleteSpotifyId} onOpenChange={() => setDeleteSpotifyId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete playlist?</AlertDialogTitle>
+            <AlertDialogTitle>Delete Spotify playlist?</AlertDialogTitle>
             <AlertDialogDescription>This action cannot be undone.</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDeletePlaylist} className="bg-destructive text-destructive-foreground">
+            <AlertDialogAction onClick={handleDeleteSpotifyPlaylist} className="bg-destructive text-destructive-foreground">
+              Delete
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      <AlertDialog open={!!deleteYouTubeId} onOpenChange={() => setDeleteYouTubeId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Delete YouTube playlist?</AlertDialogTitle>
+            <AlertDialogDescription>This action cannot be undone.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={handleDeleteYouTubePlaylist} className="bg-destructive text-destructive-foreground">
               Delete
             </AlertDialogAction>
           </AlertDialogFooter>
