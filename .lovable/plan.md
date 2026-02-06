@@ -36,7 +36,7 @@ Add fields for:
 
 ---
 
-## Phase 2: Gated Resume System (Tomorrow - ~2 credits)
+## Phase 2: Gated Resume System + YouTube Support (Tomorrow - ~2 credits)
 
 ### Step 1: Create Resume Requests Table
 ```sql
@@ -72,6 +72,33 @@ Create `send-resume-notification` edge function:
 - Create `/resume/download/:token` route
 - Validates token against approved requests
 - Serves resume file only for valid, approved tokens
+
+### Step 6: YouTube Music/Playlists Support
+Add YouTube playlist embedding alongside existing Spotify support:
+
+**Database:**
+```sql
+CREATE TABLE youtube_playlists (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    title TEXT NOT NULL,
+    youtube_url TEXT NOT NULL,
+    embed_url TEXT,
+    description TEXT,
+    display_order INTEGER DEFAULT 0,
+    is_active BOOLEAN DEFAULT true,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT now()
+);
+```
+
+**Admin Panel:**
+- Add YouTube tab/section in MusicPanel
+- CRUD operations for YouTube playlists (title, URL, description)
+- Auto-generate embed URL from YouTube playlist/video URL
+
+**Frontend:**
+- Display YouTube embeds in MusicSection alongside Spotify
+- Support both playlist and video embeds
 
 ---
 
