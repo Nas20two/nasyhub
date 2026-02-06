@@ -1,131 +1,117 @@
 
+# Phase 2 Implementation Plan
+## Gated Resume System + YouTube Music Integration
 
-# NaSy Hub Enhancement Plan
-
-This plan covers three main features: admin role grant, editable content from admin panel, and a gated resume request system. Given the scope, I'm structuring this as **Phase 1 (today)** and **Phase 2 (tomorrow)** to stay within your 5-credit budget.
+This plan covers two major features:
+1. **Gated Resume Download System** - Replace direct downloads with a request-and-approval workflow with email notifications
+2. **YouTube Music Playlists** - Add YouTube playlist support alongside existing Spotify playlists
 
 ---
 
-## Phase 1: Admin Role + Editable Content (Today - ~3 credits)
+## Part 1: YouTube Music Integration
 
-### Step 1: Grant Admin Role
-Run SQL to assign admin role to the first registered user:
-```sql
-INSERT INTO user_roles (user_id, role) 
-SELECT id, 'admin' FROM auth.users LIMIT 1;
+### 1.1 Update MusicSection.tsx
+Add YouTube playlists alongside Spotify playlists in the frontend:
+- Fetch from `youtube_playlists` table
+- Display YouTube embeds using the standard iframe embed format
+- Add a third tab or integrate into the existing "Playlists" tab with platform indicators
+
+### 1.2 Update MusicPanel.tsx (Admin)
+Extend the admin panel to manage YouTube playlists:
+- Add a "YouTube Playlists" tab alongside "My Tracks" and "Spotify Playlists"
+- CRUD operations for YouTube playlists (title, URL, embed URL, description, active status)
+- Auto-generate embed URL from YouTube playlist URL
+
+---
+
+## Part 2: Gated Resume System
+
+### 2.1 Create Resume Request Modal
+Replace the direct download button in ResumeSection.tsx with a request flow:
+- Modal form collecting: name, email, optional notes
+- Submit to `resume_requests` table
+- Show success message after submission
+
+### 2.2 Create Edge Function: send-resume-notification
+Backend function using Resend to send emails:
+- **Admin notification**: When a new request is submitted, email the admin
+- **Approval email**: When admin approves, send requester an email with unique download link
+
+### 2.3 Create Resume Requests Panel (Admin)
+New admin section to manage resume requests:
+- List all pending/approved/rejected requests
+- Approve/reject actions with one click
+- View requester details and notes
+- Approval triggers the email edge function
+
+### 2.4 Create Token-Validated Download Route
+New page at `/resume/download/:token`:
+- Validates the download token against `resume_requests` table
+- If valid and approved, redirects to the actual resume file
+- If invalid or pending, shows appropriate error message
+
+---
+
+## Files to Create
+
+| File | Purpose |
+|------|---------|
+| `supabase/functions/send-resume-notification/index.ts` | Edge function for email notifications |
+| `src/components/admin/ResumeRequestsPanel.tsx` | Admin panel for managing requests |
+| `src/components/sections/ResumeRequestModal.tsx` | Modal for visitors to request resume |
+| `src/pages/ResumeDownload.tsx` | Token-validated download page |
+
+## Files to Modify
+
+| File | Changes |
+|------|---------|
+| `src/components/sections/MusicSection.tsx` | Add YouTube playlist fetching and display |
+| `src/components/admin/MusicPanel.tsx` | Add YouTube playlist CRUD tab |
+| `src/components/sections/ResumeSection.tsx` | Replace download button with request modal trigger |
+| `src/pages/AdminPage.tsx` | Add Resume Requests panel to sidebar |
+| `src/App.tsx` | Add `/resume/download/:token` route |
+| `supabase/config.toml` | Register the new edge function |
+
+---
+
+## Technical Details
+
+### Edge Function: send-resume-notification
+
+```text
+Endpoint: POST /send-resume-notification
+Actions:
+  - "new_request": Sends admin notification email
+  - "approved": Sends download link to requester
+
+Required Secret: RESEND_API_KEY
 ```
 
-### Step 2: Make Frontend Sections Dynamic
-Currently, Hero, About, Contact sections have hardcoded content. I'll update them to pull from the `profiles` table so you can edit everything from admin:
+### YouTube Embed URL Format
+Converts `https://www.youtube.com/playlist?list=PLAYLIST_ID` to `https://www.youtube.com/embed/videoseries?list=PLAYLIST_ID`
 
-**Changes to sections:**
-- `HeroSection.tsx` - Fetch tagline/subtitle from profiles table
-- `AboutSection.tsx` - Fetch bio, avatar, skills from profiles table  
-- `ContactSection.tsx` - Fetch email, location, social links from profiles table
-- `ResumeSection.tsx` - Fetch experience/education from a new table
+### Resume Download Flow
 
-**Database additions:**
-- Add `hero_tagline`, `hero_subtitle` columns to `profiles` table
-- Create `resume_entries` table (for experience/education items)
-
-### Step 3: Extend Admin Profile Panel
-Add fields for:
-- Hero tagline & subtitle
-- Skills list (editable)
-- Resume entries management (add/edit/delete experience & education)
-
----
-
-## Phase 2: Gated Resume System + YouTube Support (Tomorrow - ~2 credits)
-
-### Step 1: Create Resume Requests Table
-```sql
-CREATE TABLE resume_requests (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    requester_email TEXT NOT NULL,
-    requester_name TEXT NOT NULL,
-    notes TEXT,
-    status TEXT DEFAULT 'pending', -- pending, approved, rejected
-    download_token UUID DEFAULT gen_random_uuid(),
-    approved_at TIMESTAMP WITH TIME ZONE,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT now()
-);
+```text
+1. Visitor clicks "Request Resume" button
+2. Modal opens - they enter name, email, notes
+3. Request saved to database, edge function sends admin notification
+4. Admin sees request in dashboard, clicks "Approve"
+5. Edge function sends email to requester with unique link
+6. Requester clicks link, token validated, resume downloads
 ```
 
-### Step 2: Update Resume Section UI
-- Replace direct download button with "Request Resume" button
-- Show request form modal (name, email, brief note)
-- Confirmation message after submission
-
-### Step 3: Admin Resume Requests Panel
-- Add "Resume Requests" tab to admin dashboard
-- Show pending requests with requester details
-- Approve/Reject buttons with one-click actions
-
-### Step 4: Email Notifications via Edge Function
-Create `send-resume-notification` edge function:
-- When request submitted: Email you with requester details
-- When approved: Email requester with unique download link
-- Uses Resend for email delivery (will need RESEND_API_KEY)
-
-### Step 5: Secure Download Page
-- Create `/resume/download/:token` route
-- Validates token against approved requests
-- Serves resume file only for valid, approved tokens
-
-### Step 6: YouTube Music/Playlists Support
-Add YouTube playlist embedding alongside existing Spotify support:
-
-**Database:**
-```sql
-CREATE TABLE youtube_playlists (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    title TEXT NOT NULL,
-    youtube_url TEXT NOT NULL,
-    embed_url TEXT,
-    description TEXT,
-    display_order INTEGER DEFAULT 0,
-    is_active BOOLEAN DEFAULT true,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT now(),
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT now()
-);
-```
-
-**Admin Panel:**
-- Add YouTube tab/section in MusicPanel
-- CRUD operations for YouTube playlists (title, URL, description)
-- Auto-generate embed URL from YouTube playlist/video URL
-
-**Frontend:**
-- Display YouTube embeds in MusicSection alongside Spotify
-- Support both playlist and video embeds
-
 ---
 
-## Summary
+## Implementation Order
 
-| Phase | Features | Estimated Credits |
-|-------|----------|-------------------|
-| Phase 1 | Admin role, dynamic content, editable sections | ~3 credits |
-| Phase 2 | Gated resume with email workflow | ~2 credits |
-
----
-
-## What You'll Be Able To Do After Phase 1
-
-- Log in as admin and edit your profile content
-- Changes to bio, tagline, skills, social links appear immediately on homepage
-- Manage experience/education entries for resume section
-- Full CRUD on apps, prototypes, gallery, music (already working)
-
-## What Phase 2 Adds
-
-- Visitors request your resume instead of downloading directly
-- You receive email notifications for each request
-- One-click approve/reject from admin panel
-- Approved visitors get unique download link via email
-
----
-
-Ready to start Phase 1 today?
-
+1. Store the RESEND_API_KEY secret
+2. Create the edge function for email notifications
+3. Create the Resume Request Modal component
+4. Update ResumeSection to use the modal
+5. Create the ResumeRequestsPanel for admin
+6. Update AdminPage to include the new panel
+7. Create the token-validated download page
+8. Add the download route to App.tsx
+9. Update MusicSection for YouTube playlists
+10. Update MusicPanel for YouTube CRUD
