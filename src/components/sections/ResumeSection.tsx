@@ -1,10 +1,11 @@
- import { useEffect, useState } from "react";
- import { Download, Briefcase, GraduationCap, Award } from "lucide-react";
+import { useEffect, useState } from "react";
+import { FileText, Briefcase, GraduationCap, Award } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
- import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/supabase/client";
+import { ResumeRequestModal } from "./ResumeRequestModal";
 
- interface ResumeEntry {
+interface ResumeEntry {
    id: string;
    type: string;
    title: string;
@@ -15,11 +16,11 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
  }
 
 export function ResumeSection() {
-   const [experience, setExperience] = useState<ResumeEntry[]>([]);
-   const [education, setEducation] = useState<ResumeEntry[]>([]);
-   const [skills, setSkills] = useState<string[]>([]);
-   const [resumeUrl, setResumeUrl] = useState<string | null>(null);
-   const [isLoading, setIsLoading] = useState(true);
+  const [experience, setExperience] = useState<ResumeEntry[]>([]);
+  const [education, setEducation] = useState<ResumeEntry[]>([]);
+  const [skills, setSkills] = useState<string[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [isModalOpen, setIsModalOpen] = useState(false);
  
    useEffect(() => {
      const fetchData = async () => {
@@ -34,17 +35,16 @@ export function ResumeSection() {
          setEducation(entries.filter(e => e.type === "education"));
        }
  
-       // Fetch skills and resume URL from profile
-       const { data: profile } = await supabase
-         .from("profiles")
-         .select("skills, resume_url")
-         .limit(1)
-         .single();
-       
-       if (profile) {
-         setSkills(profile.skills || []);
-         setResumeUrl(profile.resume_url);
-       }
+      // Fetch skills from profile
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("skills")
+        .limit(1)
+        .single();
+      
+      if (profile) {
+        setSkills(profile.skills || []);
+      }
        
        setIsLoading(false);
      };
@@ -67,13 +67,12 @@ export function ResumeSection() {
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto mb-8">
               A brief overview of my professional journey and skills.
             </p>
-             <Button 
-               className="gradient-accent"
-               onClick={() => resumeUrl && window.open(resumeUrl, "_blank")}
-               disabled={!resumeUrl}
-             >
-              <Download className="mr-2 h-4 w-4" />
-              Download Full Resume
+            <Button 
+              className="gradient-accent"
+              onClick={() => setIsModalOpen(true)}
+            >
+              <FileText className="mr-2 h-4 w-4" />
+              Request Resume
             </Button>
           </div>
 
@@ -160,6 +159,8 @@ export function ResumeSection() {
           </div>
         </div>
       </div>
+
+      <ResumeRequestModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} />
     </section>
   );
 }

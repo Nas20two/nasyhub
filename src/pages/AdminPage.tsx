@@ -31,12 +31,15 @@ import { GalleryPanel } from "@/components/admin/GalleryPanel";
 import { MusicPanel } from "@/components/admin/MusicPanel";
 import { MessagesPanel } from "@/components/admin/MessagesPanel";
 import { ProfilePanel } from "@/components/admin/ProfilePanel";
+import { ResumeRequestsPanel } from "@/components/admin/ResumeRequestsPanel";
+import { ClipboardList } from "lucide-react";
 
 const menuItems = [
   { id: "apps", label: "Apps", icon: Smartphone },
   { id: "prototypes", label: "AI Prototypes", icon: Bot },
   { id: "gallery", label: "Gallery", icon: Image },
   { id: "music", label: "Music", icon: Music },
+  { id: "resume-requests", label: "Resume Requests", icon: ClipboardList },
   { id: "messages", label: "Messages", icon: Mail },
   { id: "profile", label: "Profile & Resume", icon: FileText },
 ];
@@ -192,6 +195,7 @@ export default function AdminPage() {
           {activeTab === "prototypes" && <PrototypesPanel />}
           {activeTab === "gallery" && <GalleryPanel />}
           {activeTab === "music" && <MusicPanel />}
+          {activeTab === "resume-requests" && <ResumeRequestsPanel />}
           {activeTab === "messages" && <MessagesPanel />}
           {activeTab === "profile" && <ProfilePanel />}
         </div>
