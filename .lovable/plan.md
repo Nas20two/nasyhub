@@ -1,93 +1,58 @@
 
-# Fix: First-Admin Bootstrap Mechanism
+# Add Social Links to Footer
 
-## The Problem
+## Overview
 
-You have a user signed up, but the `user_roles` table is empty. Since all admin-protected tables use `has_role(auth.uid(), 'admin')` in their RLS policies, you cannot manage any content because you're not recognized as an admin.
-
-The current RLS on `user_roles` prevents users from inserting their own roles (which is correct for security), but there's no mechanism to create the first admin.
+Enhance the footer with social media links (GitHub, LinkedIn, Twitter) that are dynamically loaded from the database, matching the contact section. The links will have smooth hover animations for a polished feel.
 
 ---
 
-## The Solution
+## What You'll Get
 
-I will create a database trigger that automatically assigns the admin role to the first user who signs up (when no admin exists yet). This is a secure bootstrap pattern.
-
----
-
-## Database Changes
-
-### 1. Create the First-Admin Trigger Function
-
-A `SECURITY DEFINER` function that:
-- Checks if any admin role exists in `user_roles`
-- If no admin exists, assigns the new user the admin role
-- Runs after a user confirms their email in `auth.users`
-
-### 2. Add Trigger to auth.users
-
-Fire the function after a user's `email_confirmed_at` is updated (when they verify their email).
-
-### 3. Manually Fix the Existing User
-
-Since your user already exists and verified their email before this trigger was created, I'll also insert the admin role for your existing user.
+- Social media icons (GitHub, LinkedIn, Twitter) displayed in the footer
+- Smooth hover effects with scale and color transitions
+- Links pulled dynamically from your profile settings in the database
+- Graceful handling when links aren't configured (only shows configured links)
+- Consistent styling that matches the rest of the portfolio
 
 ---
 
-## SQL Migration
+## Visual Layout
 
-```sql
--- Create the first-admin bootstrap function
-CREATE OR REPLACE FUNCTION public.handle_first_admin()
-RETURNS TRIGGER
-LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path = public
-AS $$
-BEGIN
-  -- Only assign admin if no admin exists yet and the user just confirmed their email
-  IF NEW.email_confirmed_at IS NOT NULL 
-     AND (OLD.email_confirmed_at IS NULL OR OLD.email_confirmed_at IS DISTINCT FROM NEW.email_confirmed_at) THEN
-    IF NOT EXISTS (SELECT 1 FROM public.user_roles WHERE role = 'admin') THEN
-      INSERT INTO public.user_roles (user_id, role)
-      VALUES (NEW.id, 'admin');
-    END IF;
-  END IF;
-  RETURN NEW;
-END;
-$$;
-
--- Create trigger on auth.users
-CREATE TRIGGER on_user_confirmed_first_admin
-  AFTER UPDATE ON auth.users
-  FOR EACH ROW
-  EXECUTE FUNCTION public.handle_first_admin();
-
--- Manually assign admin role to the existing user (since they're already confirmed)
-INSERT INTO public.user_roles (user_id, role)
-SELECT id, 'admin'::app_role
-FROM auth.users
-WHERE email = 'nasiruddin.syed@hotmail.com'
-  AND NOT EXISTS (SELECT 1 FROM public.user_roles WHERE role = 'admin');
+```text
++------------------------------------------------------------------+
+|  © 2026 NaSy Hub. All rights reserved.    [GH] [LI] [TW]   Made with ♥ using Lovable  |
++------------------------------------------------------------------+
 ```
 
----
-
-## Summary of Changes
-
-| Change | Purpose |
-|--------|---------|
-| `handle_first_admin()` function | Automatically assigns admin to first verified user |
-| `on_user_confirmed_first_admin` trigger | Fires when user email is confirmed |
-| Manual INSERT for existing user | Immediately grants you admin access |
+On mobile, the layout will stack vertically with social links centered.
 
 ---
 
-## After Implementation
+## Technical Details
 
-Once approved, your existing account (`nasiruddin.syed@hotmail.com`) will have admin privileges immediately. You can:
-- Log in at `/auth`
-- Access the admin dashboard at `/admin`
-- Manage all portfolio content
+### File Changes
 
-Future signups will not get admin access since an admin already exists.
+**`src/components/layout/Footer.tsx`**
+- Add state to store social links from the `profiles` table
+- Fetch social URLs on component mount (same pattern as ContactSection)
+- Render social icons with:
+  - Lucide icons (Github, Linkedin, Twitter)
+  - Hover effects: scale up + primary color transition
+  - Links open in new tab with proper `rel` attributes
+- Only display links that are configured (filter out null/empty URLs)
+
+### Dependencies
+- Uses existing Lucide React icons (already installed)
+- Uses existing Supabase client integration
+- No new packages required
+
+---
+
+## Summary
+
+| Change | Description |
+|--------|-------------|
+| Footer.tsx | Add social links with hover effects, fetched from database |
+
+This is a quick enhancement that adds professional polish to the footer while staying consistent with the existing codebase patterns.
