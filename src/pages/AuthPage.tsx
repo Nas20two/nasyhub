@@ -22,6 +22,8 @@ export default function AuthPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({ email: "", password: "" });
   const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
+  const [forgotPassword, setForgotPassword] = useState(false);
+  const [resetEmailSent, setResetEmailSent] = useState(false);
 
   useEffect(() => {
     // Check if user is already logged in
@@ -128,6 +130,46 @@ export default function AuthPage() {
     }
   };
 
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!formData.email) {
+      setErrors({ email: "Please enter your email address" });
+      return;
+    }
+
+    const emailValidation = z.string().email().safeParse(formData.email);
+    if (!emailValidation.success) {
+      setErrors({ email: "Please enter a valid email address" });
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      const redirectUrl = `${window.location.origin}/auth/reset-password`;
+
+      const { error } = await supabase.auth.resetPasswordForEmail(formData.email, {
+        redirectTo: redirectUrl,
+      });
+
+      if (error) {
+        toast({
+          title: "Request failed",
+          description: error.message,
+          variant: "destructive",
+        });
+      } else {
+        setResetEmailSent(true);
+        toast({
+          title: "Check your email",
+          description: "We've sent you a password reset link.",
+        });
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen flex items-center justify-center gradient-hero p-4">
       <div className="w-full max-w-md">
@@ -140,10 +182,71 @@ export default function AuthPage() {
 
         <Card className="border-none shadow-soft">
           <CardHeader className="text-center">
-            <CardTitle>Welcome</CardTitle>
-            <CardDescription>Sign in to manage your portfolio</CardDescription>
+            <CardTitle>{forgotPassword ? "Reset Password" : "Welcome"}</CardTitle>
+            <CardDescription>
+              {forgotPassword 
+                ? "Enter your email to receive a reset link" 
+                : "Sign in to manage your portfolio"}
+            </CardDescription>
           </CardHeader>
           <CardContent>
+            {forgotPassword ? (
+              resetEmailSent ? (
+                <div className="text-center space-y-4">
+                  <div className="w-16 h-16 mx-auto bg-primary/10 rounded-full flex items-center justify-center">
+                    <Mail className="h-8 w-8 text-primary" />
+                  </div>
+                  <p className="text-muted-foreground">
+                    We've sent a password reset link to <strong>{formData.email}</strong>. 
+                    Check your inbox and click the link to reset your password.
+                  </p>
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setForgotPassword(false);
+                      setResetEmailSent(false);
+                      setFormData({ email: "", password: "" });
+                    }}
+                    className="w-full"
+                  >
+                    Back to Login
+                  </Button>
+                </div>
+              ) : (
+                <form onSubmit={handleForgotPassword} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="reset-email">Email</Label>
+                    <div className="relative">
+                      <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        id="reset-email"
+                        type="email"
+                        placeholder="admin@example.com"
+                        className="pl-10"
+                        value={formData.email}
+                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                      />
+                    </div>
+                    {errors.email && <p className="text-sm text-destructive">{errors.email}</p>}
+                  </div>
+
+                  <Button type="submit" className="w-full gradient-accent" disabled={isLoading}>
+                    {isLoading ? "Sending..." : "Send Reset Link"}
+                  </Button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setForgotPassword(false);
+                      setErrors({});
+                    }}
+                    className="w-full text-sm text-muted-foreground hover:text-primary transition-colors"
+                  >
+                    ← Back to Login
+                  </button>
+                </form>
+              )
+            ) : (
             <Tabs defaultValue="login" className="w-full">
               <TabsList className="grid w-full grid-cols-2 mb-6">
                 <TabsTrigger value="login">Login</TabsTrigger>
@@ -194,6 +297,18 @@ export default function AuthPage() {
                   <Button type="submit" className="w-full gradient-accent" disabled={isLoading}>
                     {isLoading ? "Signing in..." : "Sign In"}
                   </Button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setForgotPassword(true);
+                      setErrors({});
+                      setResetEmailSent(false);
+                    }}
+                    className="w-full text-sm text-muted-foreground hover:text-primary transition-colors"
+                  >
+                    Forgot Password?
+                  </button>
                 </form>
               </TabsContent>
 
@@ -244,6 +359,7 @@ export default function AuthPage() {
                 </form>
               </TabsContent>
             </Tabs>
+            )}
           </CardContent>
         </Card>
 
