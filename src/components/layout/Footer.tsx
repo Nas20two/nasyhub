@@ -1,6 +1,42 @@
-import { Heart } from "lucide-react";
+import { Heart, Github, Linkedin, Twitter } from "lucide-react";
+import { useEffect, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+
+interface SocialLinks {
+  github_url: string | null;
+  linkedin_url: string | null;
+  twitter_url: string | null;
+}
 
 export function Footer() {
+  const [socialLinks, setSocialLinks] = useState<SocialLinks>({
+    github_url: null,
+    linkedin_url: null,
+    twitter_url: null,
+  });
+
+  useEffect(() => {
+    const fetchSocialLinks = async () => {
+      const { data } = await supabase
+        .from("profiles")
+        .select("github_url, linkedin_url, twitter_url")
+        .limit(1)
+        .single();
+
+      if (data) {
+        setSocialLinks(data);
+      }
+    };
+
+    fetchSocialLinks();
+  }, []);
+
+  const socialItems = [
+    { url: socialLinks.github_url, icon: Github, label: "GitHub" },
+    { url: socialLinks.linkedin_url, icon: Linkedin, label: "LinkedIn" },
+    { url: socialLinks.twitter_url, icon: Twitter, label: "Twitter" },
+  ].filter((item) => item.url);
+
   return (
     <footer className="py-8 border-t border-border bg-card">
       <div className="container mx-auto px-4">
@@ -8,6 +44,24 @@ export function Footer() {
           <p className="text-sm text-muted-foreground">
             © {new Date().getFullYear()} NaSy Hub. All rights reserved.
           </p>
+          
+          {socialItems.length > 0 && (
+            <div className="flex items-center gap-4">
+              {socialItems.map(({ url, icon: Icon, label }) => (
+                <a
+                  key={label}
+                  href={url!}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  aria-label={label}
+                  className="text-muted-foreground hover:text-primary transition-all duration-300 hover:scale-110"
+                >
+                  <Icon className="h-5 w-5" />
+                </a>
+              ))}
+            </div>
+          )}
+          
           <p className="flex items-center gap-1 text-sm text-muted-foreground">
             Made with <Heart className="h-4 w-4 text-primary fill-primary" /> using Lovable
           </p>
