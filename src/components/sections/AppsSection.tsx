@@ -1,34 +1,66 @@
+import { useEffect, useState } from "react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { ExternalLink, Github, Globe } from "lucide-react";
+import { Globe, Loader2, AlertCircle } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
-// --- YOUR PORTFOLIO PROJECTS ---
-// Since we don't have a database, we list them here.
-// You can add as many as you want.
-const projects = [
-  {
-    title: "Muscle Muse",
-    description: "My personal AI fitness application built with Lovable and Supabase.",
-    // I put a placeholder URL. CHANGE THIS to your actual link.
-    demoUrl: "https://muscle-muse.lovable.app",
-    tags: ["Health", "AI", "React"],
-  },
-  {
-    title: "Beyond Gateway",
-    description: "An advanced AI gateway project exploring agent interactions.",
-    // CHANGE THIS to your actual link
-    demoUrl: "https://beyond-gateway.lovable.app",
-    tags: ["AI", "Infrastructure", "Agents"],
-  },
-  {
-    title: "NaSy Hub",
-    description: "This portfolio! A PWA built to showcase my work.",
-    demoUrl: "/",
-    tags: ["Portfolio", "PWA", "React"],
-  },
-];
+// This interface defines what your data looks like
+interface Project {
+  id: string;
+  title: string;
+  description: string;
+  demo_url: string | null;
+  tags: string[] | null;
+  image_url: string | null;
+}
 
 export const AppsSection = () => {
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchProjects = async () => {
+      try {
+        setLoading(true);
+        // 1. We look for a table named 'apps'
+        const { data, error } = await supabase.from("apps").select("*").order("created_at", { ascending: false });
+
+        if (error) {
+          throw error;
+        }
+
+        setProjects(data || []);
+      } catch (err: any) {
+        console.error("Error fetching projects:", err);
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProjects();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="py-24 flex justify-center items-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary mr-2" />
+        <span className="text-muted-foreground">Loading your projects...</span>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="py-24 flex flex-col justify-center items-center text-destructive">
+        <AlertCircle className="h-8 w-8 mb-2" />
+        <p>Error loading projects: {error}</p>
+        <p className="text-sm text-muted-foreground mt-2">(Tip: Does the 'apps' table exist in your Supabase?)</p>
+      </div>
+    );
+  }
+
   return (
     <section id="apps" className="py-24 bg-secondary/30">
       <div className="container px-4 md:px-6">
@@ -37,35 +69,50 @@ export const AppsSection = () => {
           <p className="max-w-[700px] text-muted-foreground">Projects I've built and deployed.</p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {projects.map((project, index) => (
-            <Card key={index} className="flex flex-col h-full bg-card hover:shadow-lg transition-shadow">
-              <CardHeader>
-                <CardTitle>{project.title}</CardTitle>
-                <div className="flex gap-2 mt-2">
-                  {project.tags.map((tag) => (
-                    <span key={tag} className="px-2 py-1 text-xs rounded-full bg-primary/10 text-primary">
-                      {tag}
-                    </span>
-                  ))}
-                </div>
-              </CardHeader>
-              <CardContent className="flex-1">
-                <CardDescription className="text-base">{project.description}</CardDescription>
-              </CardContent>
-              <CardFooter className="flex gap-2">
-                {project.demoUrl && (
-                  <Button asChild className="flex-1" variant="default">
-                    <a href={project.demoUrl} target="_blank" rel="noopener noreferrer">
-                      <Globe className="w-4 h-4 mr-2" />
-                      Launch
-                    </a>
-                  </Button>
+        {projects.length === 0 ? (
+          <div className="text-center py-10 border-2 border-dashed rounded-lg">
+            <p className="text-muted-foreground">No projects found in the database yet.</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {projects.map((project) => (
+              <Card key={project.id} className="flex flex-col h-full bg-card hover:shadow-lg transition-shadow">
+                {project.image_url && (
+                  <div className="h-48 overflow-hidden rounded-t-lg">
+                    <img
+                      src={project.image_url}
+                      alt={project.title}
+                      className="w-full h-full object-cover transition-transform hover:scale-105"
+                    />
+                  </div>
                 )}
-              </CardFooter>
-            </Card>
-          ))}
-        </div>
+                <CardHeader>
+                  <CardTitle>{project.title}</CardTitle>
+                  <div className="flex gap-2 mt-2 flex-wrap">
+                    {project.tags?.map((tag) => (
+                      <span key={tag} className="px-2 py-1 text-xs rounded-full bg-primary/10 text-primary">
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                </CardHeader>
+                <CardContent className="flex-1">
+                  <CardDescription className="text-base line-clamp-3">{project.description}</CardDescription>
+                </CardContent>
+                <CardFooter>
+                  {project.demo_url && (
+                    <Button asChild className="w-full" variant="default">
+                      <a href={project.demo_url} target="_blank" rel="noopener noreferrer">
+                        <Globe className="w-4 h-4 mr-2" />
+                        Launch App
+                      </a>
+                    </Button>
+                  )}
+                </CardFooter>
+              </Card>
+            ))}
+          </div>
+        )}
       </div>
     </section>
   );
