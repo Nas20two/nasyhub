@@ -4,14 +4,16 @@ import { Button } from "@/components/ui/button";
 import { Globe, Loader2, AlertCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
-// This interface defines what your data looks like
+// This interface matches the apps table schema
 interface Project {
   id: string;
-  title: string;
-  description: string;
-  demo_url: string | null;
+  name: string;
+  description: string | null;
+  app_url: string | null;
   tags: string[] | null;
   image_url: string | null;
+  is_active: boolean | null;
+  display_order: number | null;
 }
 
 export const AppsSection = () => {
@@ -81,13 +83,13 @@ export const AppsSection = () => {
                   <div className="h-48 overflow-hidden rounded-t-lg">
                     <img
                       src={project.image_url}
-                      alt={project.title}
+                      alt={project.name}
                       className="w-full h-full object-cover transition-transform hover:scale-105"
                     />
                   </div>
                 )}
                 <CardHeader>
-                  <CardTitle>{project.title}</CardTitle>
+                  <CardTitle>{project.name}</CardTitle>
                   <div className="flex gap-2 mt-2 flex-wrap">
                     {project.tags?.map((tag) => (
                       <span key={tag} className="px-2 py-1 text-xs rounded-full bg-primary/10 text-primary">
@@ -100,9 +102,9 @@ export const AppsSection = () => {
                   <CardDescription className="text-base line-clamp-3">{project.description}</CardDescription>
                 </CardContent>
                 <CardFooter>
-                  {project.demo_url && (
+                  {project.app_url && (
                     <Button asChild className="w-full" variant="default">
-                      <a href={project.demo_url} target="_blank" rel="noopener noreferrer">
+                      <a href={project.app_url} target="_blank" rel="noopener noreferrer">
                         <Globe className="w-4 h-4 mr-2" />
                         Launch App
                       </a>
