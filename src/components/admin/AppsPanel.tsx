@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { Plus, Pencil, Trash2, GripVertical, ExternalLink } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { Plus, Pencil, Trash2, GripVertical, ExternalLink, Upload } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -45,6 +45,8 @@ export function AppsPanel() {
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingApp, setEditingApp] = useState<App | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploading, setUploading] = useState(false);
   const [formData, setFormData] = useState({
     name: "",
     description: "",
@@ -53,6 +55,23 @@ export function AppsPanel() {
     tags: "",
     is_active: true,
   });
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+    const fileExt = file.name.split(".").pop();
+    const fileName = `apps/${Date.now()}.${fileExt}`;
+    const { error: uploadError } = await supabase.storage.from("gallery").upload(fileName, file);
+    if (uploadError) {
+      toast({ title: "Upload failed", description: uploadError.message, variant: "destructive" });
+    } else {
+      const { data: urlData } = supabase.storage.from("gallery").getPublicUrl(fileName);
+      setFormData((prev) => ({ ...prev, image_url: urlData.publicUrl }));
+      toast({ title: "Success", description: "Image uploaded" });
+    }
+    setUploading(false);
+  };
 
   const fetchApps = async () => {
     const { data, error } = await supabase
@@ -270,13 +289,37 @@ export function AppsPanel() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="image_url">Image URL</Label>
-              <Input
-                id="image_url"
-                value={formData.image_url}
-                onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
-                placeholder="https://example.com/screenshot.png"
-              />
+              <Label htmlFor="image_url">Image</Label>
+              <div className="flex gap-2">
+                <Input
+                  id="image_url"
+                  value={formData.image_url}
+                  onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
+                  placeholder="URL or upload an image"
+                  className="flex-1"
+                />
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleFileUpload}
+                  className="hidden"
+                />
+                <Button
+                  variant="outline"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={uploading}
+                >
+                  {uploading ? "..." : <Upload className="h-4 w-4" />}
+                </Button>
+              </div>
+              {formData.image_url && (
+                <img
+                  src={formData.image_url}
+                  alt="Preview"
+                  className="w-full h-32 object-cover rounded-lg mt-2"
+                />
+              )}
             </div>
             <div className="space-y-2">
               <Label htmlFor="tags">Tags (comma-separated)</Label>
