@@ -140,13 +140,18 @@ export function GallerySection() {
                 className="break-inside-avoid group cursor-pointer"
                 onClick={() => openLightbox(index)}
               >
-                <div className="relative overflow-hidden rounded-xl shadow-card hover:shadow-soft transition-all duration-300">
+                <div className="relative overflow-hidden rounded-xl shadow-card hover:shadow-soft transition-all duration-300" onContextMenu={(e) => e.preventDefault()}>
                   <img
                     src={image.image_url}
                     alt={image.title}
                     className="w-full h-auto object-cover"
                     loading="lazy"
+                    draggable={false}
                   />
+                  {/* Watermark */}
+                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none">
+                    <span className="text-white/30 text-4xl font-display font-bold -rotate-12 tracking-widest">NaSy</span>
+                  </div>
                   {/* Overlay */}
                   <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                     <div className="absolute bottom-0 left-0 right-0 p-4 text-white">
@@ -191,12 +196,17 @@ export function GallerySection() {
                   <ChevronRight className="h-8 w-8" />
                 </Button>
 
-                <div className="aspect-video flex items-center justify-center p-8">
+                <div className="aspect-video flex items-center justify-center p-8 relative" onContextMenu={(e) => e.preventDefault()}>
                   <img
                     src={filteredImages[currentImageIndex]?.image_url}
                     alt={filteredImages[currentImageIndex]?.title}
                     className="max-h-full max-w-full object-contain"
+                    draggable={false}
                   />
+                  {/* Watermark */}
+                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none select-none">
+                    <span className="text-white/30 text-6xl font-display font-bold -rotate-12 tracking-widest">NaSy</span>
+                  </div>
                 </div>
 
                 <div className="p-6 text-center text-white">
