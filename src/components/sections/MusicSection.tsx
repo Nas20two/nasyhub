@@ -110,7 +110,10 @@ export function MusicSection() {
             </TabsList>
 
             {/* Original Tracks */}
-            <TabsContent value="tracks" className="space-y-4">
+            <TabsContent value="tracks" className="space-y-4" onContextMenu={(e) => e.preventDefault()}>
+              <p className="text-center text-xs text-muted-foreground italic mb-2">
+                🎧 Streaming only — downloads not available
+              </p>
               {displayTracks.map((track) => (
                 <Card key={track.id} className="overflow-hidden border-none shadow-card hover:shadow-soft transition-all">
                   <div className="flex items-center gap-4 p-4">

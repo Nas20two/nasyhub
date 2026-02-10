@@ -50,7 +50,7 @@ export function AboutSection() {
           <div className="grid lg:grid-cols-2 gap-12 items-center">
             {/* Profile Image Placeholder */}
             <div className="relative">
-              <div className="aspect-square max-w-md mx-auto rounded-2xl overflow-hidden shadow-soft bg-gradient-to-br from-secondary to-accent">
+              <div className="aspect-square max-w-[14rem] mx-auto rounded-2xl overflow-hidden shadow-soft bg-gradient-to-br from-secondary to-accent">
                {profile?.avatar_url ? (
                  <img 
                    src={profile.avatar_url} 
@@ -59,7 +59,7 @@ export function AboutSection() {
                  />
                ) : (
                  <div className="w-full h-full flex items-center justify-center">
-                   <User className="w-32 h-32 text-muted-foreground/50" />
+                   <User className="w-16 h-16 text-muted-foreground/50" />
                  </div>
                )}
               </div>
