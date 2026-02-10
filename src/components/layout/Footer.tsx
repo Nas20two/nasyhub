@@ -17,14 +17,15 @@ export function Footer() {
 
   useEffect(() => {
     const fetchSocialLinks = async () => {
-      const { data } = await supabase
-        .from("profiles")
-        .select("github_url, linkedin_url, twitter_url")
-        .limit(1)
-        .single();
+      const { data } = await supabase.rpc("get_public_profile");
+      const profile = Array.isArray(data) ? data[0] : data;
 
-      if (data) {
-        setSocialLinks(data);
+      if (profile) {
+        setSocialLinks({
+          github_url: profile.github_url,
+          linkedin_url: profile.linkedin_url,
+          twitter_url: profile.twitter_url,
+        });
       }
     };
 
