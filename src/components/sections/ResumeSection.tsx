@@ -35,12 +35,9 @@ export function ResumeSection() {
          setEducation(entries.filter(e => e.type === "education"));
        }
  
-      // Fetch skills from profile
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("skills")
-        .limit(1)
-        .single();
+      // Fetch skills from profile via RPC
+      const { data: profileData } = await supabase.rpc("get_public_profile");
+      const profile = Array.isArray(profileData) ? profileData[0] : profileData;
       
       if (profile) {
         setSkills(profile.skills || []);

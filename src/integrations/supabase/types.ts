@@ -447,62 +447,26 @@ export type Database = {
       }
     }
     Views: {
-      public_profiles: {
-        Row: {
-          avatar_url: string | null
-          bio: string | null
-          created_at: string | null
-          display_name: string | null
-          github_url: string | null
-          hero_subtitle: string | null
-          hero_tagline: string | null
-          id: string | null
-          linkedin_url: string | null
-          location: string | null
-          resume_url: string | null
-          skills: string[] | null
-          twitter_url: string | null
-          updated_at: string | null
-          user_id: string | null
-        }
-        Insert: {
-          avatar_url?: string | null
-          bio?: string | null
-          created_at?: string | null
-          display_name?: string | null
-          github_url?: string | null
-          hero_subtitle?: string | null
-          hero_tagline?: string | null
-          id?: string | null
-          linkedin_url?: string | null
-          location?: string | null
-          resume_url?: string | null
-          skills?: string[] | null
-          twitter_url?: string | null
-          updated_at?: string | null
-          user_id?: string | null
-        }
-        Update: {
-          avatar_url?: string | null
-          bio?: string | null
-          created_at?: string | null
-          display_name?: string | null
-          github_url?: string | null
-          hero_subtitle?: string | null
-          hero_tagline?: string | null
-          id?: string | null
-          linkedin_url?: string | null
-          location?: string | null
-          resume_url?: string | null
-          skills?: string[] | null
-          twitter_url?: string | null
-          updated_at?: string | null
-          user_id?: string | null
-        }
-        Relationships: []
-      }
+      [_ in never]: never
     }
     Functions: {
+      get_public_profile: {
+        Args: never
+        Returns: {
+          avatar_url: string
+          bio: string
+          display_name: string
+          github_url: string
+          hero_subtitle: string
+          hero_tagline: string
+          id: string
+          linkedin_url: string
+          location: string
+          resume_url: string
+          skills: string[]
+          twitter_url: string
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]

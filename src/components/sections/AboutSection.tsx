@@ -28,13 +28,9 @@ export function AboutSection() {
  
    useEffect(() => {
      const fetchProfile = async () => {
-       const { data } = await supabase
-         .from("profiles")
-         .select("display_name, bio, avatar_url, skills")
-         .limit(1)
-         .single();
-       
-       setProfile(data);
+       const { data } = await supabase.rpc("get_public_profile");
+       const profile = Array.isArray(data) ? data[0] : data;
+       setProfile(profile);
        setIsLoading(false);
      };
      fetchProfile();

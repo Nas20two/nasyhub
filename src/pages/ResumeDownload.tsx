@@ -45,12 +45,9 @@ export default function ResumeDownload() {
           return;
         }
 
-        // Get the resume URL from profile
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("resume_url")
-          .limit(1)
-          .single();
+        // Get the resume URL from profile via RPC
+        const { data: profileData } = await supabase.rpc("get_public_profile");
+        const profile = Array.isArray(profileData) ? profileData[0] : profileData;
 
         if (profile?.resume_url) {
           setResumeUrl(profile.resume_url);

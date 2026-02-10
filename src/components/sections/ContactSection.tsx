@@ -1,5 +1,5 @@
  import { useState, useEffect } from "react";
-import { Send, Mail, MapPin, Github, Linkedin, Twitter } from "lucide-react";
+import { Send, MapPin, Github, Linkedin, Twitter } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -9,7 +9,6 @@ import { useToast } from "@/hooks/use-toast";
  import { supabase } from "@/integrations/supabase/client";
 
  interface ContactInfo {
-   email: string | null;
    location: string | null;
    github_url: string | null;
    linkedin_url: string | null;
@@ -20,7 +19,6 @@ export function ContactSection() {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
    const [contactInfo, setContactInfo] = useState<ContactInfo>({
-     email: "hello@nasyhub.com",
      location: "Your City, Country",
      github_url: null,
      linkedin_url: null,
@@ -34,19 +32,15 @@ export function ContactSection() {
  
    useEffect(() => {
      const fetchContactInfo = async () => {
-       const { data } = await supabase
-         .from("profiles")
-         .select("email, location, github_url, linkedin_url, twitter_url")
-         .limit(1)
-         .single();
+       const { data } = await supabase.rpc("get_public_profile");
+       const profile = Array.isArray(data) ? data[0] : data;
        
-       if (data) {
+       if (profile) {
          setContactInfo({
-           email: data.email || contactInfo.email,
-           location: data.location || contactInfo.location,
-           github_url: data.github_url,
-           linkedin_url: data.linkedin_url,
-           twitter_url: data.twitter_url,
+           location: profile.location || contactInfo.location,
+           github_url: profile.github_url,
+           linkedin_url: profile.linkedin_url,
+           twitter_url: profile.twitter_url,
          });
        }
      };
@@ -164,21 +158,16 @@ export function ContactSection() {
 
             {/* Contact Info */}
             <div className="lg:col-span-2 space-y-6">
-              {/* Email */}
+              {/* Location */}
               <Card className="border-none shadow-card">
                 <CardContent className="p-6">
                   <div className="flex items-center gap-4">
                     <div className="w-12 h-12 rounded-full bg-secondary flex items-center justify-center">
-                      <Mail className="w-5 h-5 text-primary" />
+                      <MapPin className="w-5 h-5 text-primary" />
                     </div>
                     <div>
-                      <p className="text-sm text-muted-foreground">Email</p>
-                      <a
-                         href={`mailto:${contactInfo.email}`}
-                        className="font-medium hover:text-primary transition-colors"
-                      >
-                         {contactInfo.email}
-                      </a>
+                      <p className="text-sm text-muted-foreground">Location</p>
+                       <p className="font-medium">{contactInfo.location}</p>
                     </div>
                   </div>
                 </CardContent>

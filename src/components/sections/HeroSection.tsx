@@ -16,16 +16,13 @@ export function HeroSection() {
  
    useEffect(() => {
      const fetchContent = async () => {
-       const { data } = await supabase
-         .from("profiles")
-         .select("hero_tagline, hero_subtitle")
-         .limit(1)
-         .single();
+       const { data } = await supabase.rpc("get_public_profile");
+       const profile = Array.isArray(data) ? data[0] : data;
        
-       if (data) {
+       if (profile) {
          setContent({
-           hero_tagline: data.hero_tagline || content.hero_tagline,
-           hero_subtitle: data.hero_subtitle || content.hero_subtitle,
+           hero_tagline: profile.hero_tagline || content.hero_tagline,
+           hero_subtitle: profile.hero_subtitle || content.hero_subtitle,
          });
        }
      };
