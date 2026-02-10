@@ -109,8 +109,12 @@ export function ProfilePanel() {
       toast({ title: "Upload failed", description: uploadError.message, variant: "destructive" });
     } else {
       const { data: urlData } = supabase.storage.from("avatars").getPublicUrl(fileName);
-      setProfile({ ...profile, avatar_url: urlData.publicUrl });
-      toast({ title: "Success", description: "Avatar uploaded" });
+      setProfile((prev) => ({ ...prev, avatar_url: urlData.publicUrl }));
+      // Auto-save to database immediately
+      if (profile.id) {
+        await supabase.from("profiles").update({ avatar_url: urlData.publicUrl }).eq("id", profile.id);
+      }
+      toast({ title: "Success", description: "Avatar uploaded and saved" });
     }
     setUploading(null);
   };
@@ -131,7 +135,7 @@ export function ProfilePanel() {
       toast({ title: "Upload failed", description: uploadError.message, variant: "destructive" });
     } else {
       const { data: urlData } = supabase.storage.from("resumes").getPublicUrl(fileName);
-      setProfile({ ...profile, resume_url: urlData.publicUrl });
+      setProfile((prev) => ({ ...prev, resume_url: urlData.publicUrl }));
       toast({ title: "Success", description: "Resume uploaded" });
     }
     setUploading(null);
