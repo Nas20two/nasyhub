@@ -1,35 +1,58 @@
 
-# Fix Gallery Section and Image Display Issues
 
-## Problem
+# Fix Profile Picture Not Displaying
 
-The Gallery Section (`GallerySection.tsx`) is hardcoded with placeholder data and never fetches images from the database. You uploaded images through the admin panel, and they're stored correctly in the database with proper storage URLs, but the public-facing gallery ignores them entirely.
+## Root Cause
 
-## What Will Be Fixed
+Two issues identified:
 
-1. **Gallery Section not loading database images** -- The gallery will fetch real images and categories from the database instead of showing placeholders
-2. **Apps admin panel missing image upload** -- Currently you can only paste a URL for app images; adding a file upload button so you can upload screenshots directly
+1. **Stale data on public pages**: The public-facing components (About section, etc.) fetch profile data once on mount via `get_public_profile()`. After uploading and saving a new avatar in the admin panel, the public pages still show cached (null) data until manually refreshed.
+
+2. **Potential stale closure bug in ProfilePanel**: The `handleAvatarUpload` function uses `setProfile({ ...profile, avatar_url: urlData.publicUrl })` where `profile` comes from the enclosing closure. If the user edits other fields before the upload completes, those edits could be lost. While not the primary cause here, it should be fixed for reliability.
+
+## Verification
+
+- Database query confirms `avatar_url` is correctly stored: `https://wzxveogdratuuxqixovz.supabase.co/storage/v1/object/public/avatars/avatar-1770764623843.jpeg`
+- The `get_public_profile()` RPC function correctly returns this URL when called directly
+- The `avatars` storage bucket is public, so the image URL is accessible
+- Browser network logs show the RPC returned `null` at page load time (before the save)
 
 ## Changes
 
-### 1. `src/components/sections/GallerySection.tsx` (Major Rewrite)
+### 1. Fix stale closure in ProfilePanel avatar upload (src/components/admin/ProfilePanel.tsx)
 
-- Remove all hardcoded placeholder data
-- Add `useEffect` to fetch from `gallery_images` and `gallery_categories` tables
-- Filter by `is_active = true` and order by `display_order`
-- Build category filter dynamically from database categories
-- Display actual uploaded images in the masonry grid and lightbox
-- Add loading and empty states
+Replace the state update in `handleAvatarUpload` to use the functional form of `setProfile`:
 
-### 2. `src/components/admin/AppsPanel.tsx` (Enhancement)
+```tsx
+// Before (stale closure risk):
+setProfile({ ...profile, avatar_url: urlData.publicUrl });
 
-- Add a file upload button next to the Image URL input (same pattern used in GalleryPanel)
-- Upload images to the existing storage bucket or a new one
-- This way you can upload app screenshots directly instead of only pasting URLs
+// After (safe):
+setProfile((prev) => ({ ...prev, avatar_url: urlData.publicUrl }));
+```
 
-## Technical Notes
+Apply the same fix to `handleResumeUpload`:
 
-- Gallery images are already stored in the `gallery` storage bucket with public URLs (e.g., `https://wzxveogdratuuxqixovz.supabase.co/storage/v1/object/public/gallery/...`)
-- The `gallery` bucket is already public, so no signed URLs are needed
-- RLS policies already allow public SELECT on `gallery_images` where `is_active = true`
-- No database migrations required
+```tsx
+setProfile((prev) => ({ ...prev, resume_url: urlData.publicUrl }));
+```
+
+### 2. Auto-save avatar_url to database after upload (src/components/admin/ProfilePanel.tsx)
+
+After a successful avatar upload, immediately persist the new URL to the database so the user doesn't need to remember to click "Save Changes":
+
+```tsx
+// After getting the public URL, update DB directly
+if (profile.id) {
+  await supabase.from("profiles").update({ avatar_url: urlData.publicUrl }).eq("id", profile.id);
+}
+```
+
+This ensures the avatar URL is saved to the database immediately, not just in local component state.
+
+## Technical Details
+
+- No database migrations needed -- the schema and RPC function are correct
+- No storage changes needed -- the `avatars` bucket is already public
+- The fix is entirely in the frontend `ProfilePanel.tsx` component
+
