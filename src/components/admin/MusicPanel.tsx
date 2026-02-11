@@ -44,11 +44,11 @@ interface Track {
   is_active: boolean;
 }
 
-interface SpotifyPlaylist {
+interface SoundCloudPlaylist {
   id: string;
   title: string;
   description: string | null;
-  spotify_url: string;
+  soundcloud_url: string;
   embed_url: string | null;
   use_embed: boolean;
   is_active: boolean;
@@ -65,12 +65,10 @@ interface YouTubePlaylist {
 
 // Helper to convert YouTube URL to embed URL
 const getYouTubeEmbedUrl = (url: string): string => {
-  // Handle playlist URLs
   const playlistMatch = url.match(/[?&]list=([^&]+)/);
   if (playlistMatch) {
     return `https://www.youtube.com/embed/videoseries?list=${playlistMatch[1]}`;
   }
-  // Handle video URLs
   const videoMatch = url.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|v\/|watch\?v=|watch\?.+&v=))([^&?]+)/);
   if (videoMatch) {
     return `https://www.youtube.com/embed/${videoMatch[1]}`;
@@ -78,11 +76,17 @@ const getYouTubeEmbedUrl = (url: string): string => {
   return "";
 };
 
+// Helper to generate SoundCloud embed URL from a regular URL
+const getSoundCloudEmbedUrl = (url: string): string => {
+  if (!url) return "";
+  return `https://w.soundcloud.com/player/?url=${encodeURIComponent(url)}&auto_play=false&hide_related=true&show_comments=false&show_user=true&show_reposts=false&visual=true`;
+};
+
 export function MusicPanel() {
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [tracks, setTracks] = useState<Track[]>([]);
-  const [spotifyPlaylists, setSpotifyPlaylists] = useState<SpotifyPlaylist[]>([]);
+  const [soundcloudPlaylists, setSoundcloudPlaylists] = useState<SoundCloudPlaylist[]>([]);
   const [youtubePlaylists, setYoutubePlaylists] = useState<YouTubePlaylist[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("tracks");
@@ -101,14 +105,14 @@ export function MusicPanel() {
     is_active: true,
   });
 
-  // Spotify playlist dialog state
-  const [isSpotifyDialogOpen, setIsSpotifyDialogOpen] = useState(false);
-  const [editingSpotifyPlaylist, setEditingSpotifyPlaylist] = useState<SpotifyPlaylist | null>(null);
-  const [deleteSpotifyId, setDeleteSpotifyId] = useState<string | null>(null);
-  const [spotifyFormData, setSpotifyFormData] = useState({
+  // SoundCloud playlist dialog state
+  const [isSoundCloudDialogOpen, setIsSoundCloudDialogOpen] = useState(false);
+  const [editingSoundCloudPlaylist, setEditingSoundCloudPlaylist] = useState<SoundCloudPlaylist | null>(null);
+  const [deleteSoundCloudId, setDeleteSoundCloudId] = useState<string | null>(null);
+  const [soundcloudFormData, setSoundcloudFormData] = useState({
     title: "",
     description: "",
-    spotify_url: "",
+    soundcloud_url: "",
     embed_url: "",
     use_embed: false,
     is_active: true,
@@ -127,14 +131,14 @@ export function MusicPanel() {
   });
 
   const fetchData = async () => {
-    const [tracksRes, spotifyRes, youtubeRes] = await Promise.all([
+    const [tracksRes, soundcloudRes, youtubeRes] = await Promise.all([
       supabase.from("music_tracks").select("*").order("display_order", { ascending: true }),
-      supabase.from("spotify_playlists").select("*").order("display_order", { ascending: true }),
+      supabase.from("soundcloud_playlists").select("*").order("display_order", { ascending: true }) as any,
       supabase.from("youtube_playlists").select("*").order("display_order", { ascending: true }),
     ]);
 
     if (!tracksRes.error) setTracks(tracksRes.data || []);
-    if (!spotifyRes.error) setSpotifyPlaylists(spotifyRes.data || []);
+    if (!soundcloudRes.error) setSoundcloudPlaylists(soundcloudRes.data || []);
     if (!youtubeRes.error) setYoutubePlaylists(youtubeRes.data || []);
     setIsLoading(false);
   };
@@ -244,82 +248,87 @@ export function MusicPanel() {
     setDeleteTrackId(null);
   };
 
-  // Spotify CRUD
-  const openCreateSpotifyDialog = () => {
-    setEditingSpotifyPlaylist(null);
-    setSpotifyFormData({
+  // SoundCloud CRUD
+  const openCreateSoundCloudDialog = () => {
+    setEditingSoundCloudPlaylist(null);
+    setSoundcloudFormData({
       title: "",
       description: "",
-      spotify_url: "",
+      soundcloud_url: "",
       embed_url: "",
       use_embed: false,
       is_active: true,
     });
-    setIsSpotifyDialogOpen(true);
+    setIsSoundCloudDialogOpen(true);
   };
 
-  const openEditSpotifyDialog = (playlist: SpotifyPlaylist) => {
-    setEditingSpotifyPlaylist(playlist);
-    setSpotifyFormData({
+  const openEditSoundCloudDialog = (playlist: SoundCloudPlaylist) => {
+    setEditingSoundCloudPlaylist(playlist);
+    setSoundcloudFormData({
       title: playlist.title,
       description: playlist.description || "",
-      spotify_url: playlist.spotify_url,
+      soundcloud_url: playlist.soundcloud_url,
       embed_url: playlist.embed_url || "",
       use_embed: playlist.use_embed,
       is_active: playlist.is_active,
     });
-    setIsSpotifyDialogOpen(true);
+    setIsSoundCloudDialogOpen(true);
   };
 
-  const handleSaveSpotifyPlaylist = async () => {
+  const handleSoundCloudUrlChange = (url: string) => {
+    const embedUrl = getSoundCloudEmbedUrl(url);
+    setSoundcloudFormData({ ...soundcloudFormData, soundcloud_url: url, embed_url: embedUrl });
+  };
+
+  const handleSaveSoundCloudPlaylist = async () => {
     const playlistData = {
-      title: spotifyFormData.title,
-      description: spotifyFormData.description || null,
-      spotify_url: spotifyFormData.spotify_url,
-      embed_url: spotifyFormData.embed_url || null,
-      use_embed: spotifyFormData.use_embed,
-      is_active: spotifyFormData.is_active,
+      title: soundcloudFormData.title,
+      description: soundcloudFormData.description || null,
+      soundcloud_url: soundcloudFormData.soundcloud_url,
+      embed_url: soundcloudFormData.embed_url || null,
+      use_embed: soundcloudFormData.use_embed,
+      is_active: soundcloudFormData.is_active,
     };
 
-    if (editingSpotifyPlaylist) {
-      const { error } = await supabase
-        .from("spotify_playlists")
+    if (editingSoundCloudPlaylist) {
+      const { error } = await (supabase
+        .from("soundcloud_playlists") as any)
         .update(playlistData)
-        .eq("id", editingSpotifyPlaylist.id);
+        .eq("id", editingSoundCloudPlaylist.id);
 
       if (error) {
         toast({ title: "Error", description: error.message, variant: "destructive" });
       } else {
-        toast({ title: "Success", description: "Playlist updated" });
+        toast({ title: "Success", description: "SoundCloud playlist updated" });
         fetchData();
-        setIsSpotifyDialogOpen(false);
+        setIsSoundCloudDialogOpen(false);
       }
     } else {
-      const { error } = await supabase.from("spotify_playlists").insert({
+      const { error } = await (supabase.from("soundcloud_playlists") as any).insert({
         ...playlistData,
-        display_order: spotifyPlaylists.length,
+        display_order: soundcloudPlaylists.length,
       });
 
       if (error) {
         toast({ title: "Error", description: error.message, variant: "destructive" });
       } else {
-        toast({ title: "Success", description: "Playlist created" });
+        toast({ title: "Success", description: "SoundCloud playlist created" });
         fetchData();
-        setIsSpotifyDialogOpen(false);
+        setIsSoundCloudDialogOpen(false);
       }
     }
   };
 
-  const handleDeleteSpotifyPlaylist = async () => {
-    if (!deleteSpotifyId) return;
-    const { error } = await supabase.from("spotify_playlists").delete().eq("id", deleteSpotifyId);
+  const handleDeleteSoundCloudPlaylist = async () => {
+    if (!deleteSoundCloudId) return;
+    const { error } = await (supabase.from("soundcloud_playlists") as any).delete().eq("id", deleteSoundCloudId);
     if (error) {
       toast({ title: "Error", description: error.message, variant: "destructive" });
     } else {
-      toast({ title: "Success", description: "Playlist deleted" });
+      toast({ title: "Success", description: "SoundCloud playlist deleted" });
       fetchData();
     }
-    setDeleteSpotifyId(null);
+    setDeleteSoundCloudId(null);
   };
 
   // YouTube CRUD
@@ -418,7 +427,7 @@ export function MusicPanel() {
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="mb-6">
           <TabsTrigger value="tracks">My Tracks</TabsTrigger>
-          <TabsTrigger value="spotify">Spotify Playlists</TabsTrigger>
+          <TabsTrigger value="soundcloud">SoundCloud</TabsTrigger>
           <TabsTrigger value="youtube">YouTube Playlists</TabsTrigger>
         </TabsList>
 
@@ -480,20 +489,20 @@ export function MusicPanel() {
           )}
         </TabsContent>
 
-        {/* Spotify Tab */}
-        <TabsContent value="spotify">
+        {/* SoundCloud Tab */}
+        <TabsContent value="soundcloud">
           <div className="flex justify-end mb-4">
-            <Button onClick={openCreateSpotifyDialog} className="gradient-accent">
+            <Button onClick={openCreateSoundCloudDialog} className="gradient-accent">
               <Plus className="h-4 w-4 mr-2" />
-              Add Spotify Playlist
+              Add SoundCloud Playlist
             </Button>
           </div>
 
-          {spotifyPlaylists.length === 0 ? (
+          {soundcloudPlaylists.length === 0 ? (
             <Card className="border-dashed">
               <CardContent className="flex flex-col items-center justify-center py-12">
-                <p className="text-muted-foreground mb-4">No Spotify playlists yet</p>
-                <Button onClick={openCreateSpotifyDialog} variant="outline">
+                <p className="text-muted-foreground mb-4">No SoundCloud playlists yet</p>
+                <Button onClick={openCreateSoundCloudDialog} variant="outline">
                   <Plus className="h-4 w-4 mr-2" />
                   Add your first playlist
                 </Button>
@@ -501,7 +510,7 @@ export function MusicPanel() {
             </Card>
           ) : (
             <div className="grid gap-4">
-              {spotifyPlaylists.map((playlist) => (
+              {soundcloudPlaylists.map((playlist) => (
                 <Card key={playlist.id} className={!playlist.is_active ? "opacity-60" : ""}>
                   <CardContent className="flex items-center gap-4 p-4">
                     <div className="w-12 h-12 rounded-lg bg-secondary flex items-center justify-center shrink-0">
@@ -522,18 +531,18 @@ export function MusicPanel() {
                     </div>
                     <div className="flex items-center gap-2">
                       <Button variant="ghost" size="icon" asChild>
-                        <a href={playlist.spotify_url} target="_blank" rel="noopener noreferrer">
+                        <a href={playlist.soundcloud_url} target="_blank" rel="noopener noreferrer">
                           <ExternalLink className="h-4 w-4" />
                         </a>
                       </Button>
-                      <Button variant="ghost" size="icon" onClick={() => openEditSpotifyDialog(playlist)}>
+                      <Button variant="ghost" size="icon" onClick={() => openEditSoundCloudDialog(playlist)}>
                         <Pencil className="h-4 w-4" />
                       </Button>
                       <Button
                         variant="ghost"
                         size="icon"
                         className="text-destructive"
-                        onClick={() => setDeleteSpotifyId(playlist.id)}
+                        onClick={() => setDeleteSoundCloudId(playlist.id)}
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
@@ -709,75 +718,78 @@ export function MusicPanel() {
         </DialogContent>
       </Dialog>
 
-      {/* Spotify Playlist Dialog */}
-      <Dialog open={isSpotifyDialogOpen} onOpenChange={setIsSpotifyDialogOpen}>
+      {/* SoundCloud Playlist Dialog */}
+      <Dialog open={isSoundCloudDialogOpen} onOpenChange={setIsSoundCloudDialogOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>{editingSpotifyPlaylist ? "Edit Playlist" : "Add Spotify Playlist"}</DialogTitle>
+            <DialogTitle>{editingSoundCloudPlaylist ? "Edit Playlist" : "Add SoundCloud Playlist"}</DialogTitle>
           </DialogHeader>
           <div className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="spotify-title">Title</Label>
+              <Label htmlFor="soundcloud-title">Title</Label>
               <Input
-                id="spotify-title"
-                value={spotifyFormData.title}
-                onChange={(e) => setSpotifyFormData({ ...spotifyFormData, title: e.target.value })}
+                id="soundcloud-title"
+                value={soundcloudFormData.title}
+                onChange={(e) => setSoundcloudFormData({ ...soundcloudFormData, title: e.target.value })}
                 placeholder="Playlist title"
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="spotify-description">Description</Label>
+              <Label htmlFor="soundcloud-description">Description</Label>
               <Textarea
-                id="spotify-description"
-                value={spotifyFormData.description}
-                onChange={(e) => setSpotifyFormData({ ...spotifyFormData, description: e.target.value })}
+                id="soundcloud-description"
+                value={soundcloudFormData.description}
+                onChange={(e) => setSoundcloudFormData({ ...soundcloudFormData, description: e.target.value })}
                 placeholder="Brief description"
                 rows={2}
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="spotify_url">Spotify URL</Label>
+              <Label htmlFor="soundcloud_url">SoundCloud URL</Label>
               <Input
-                id="spotify_url"
-                value={spotifyFormData.spotify_url}
-                onChange={(e) => setSpotifyFormData({ ...spotifyFormData, spotify_url: e.target.value })}
-                placeholder="https://open.spotify.com/playlist/..."
+                id="soundcloud_url"
+                value={soundcloudFormData.soundcloud_url}
+                onChange={(e) => handleSoundCloudUrlChange(e.target.value)}
+                placeholder="https://soundcloud.com/artist/playlist-name"
               />
+              <p className="text-xs text-muted-foreground">
+                Paste a SoundCloud URL. The embed URL will be generated automatically.
+              </p>
             </div>
             <div className="flex items-center gap-2">
               <Switch
                 id="use_embed"
-                checked={spotifyFormData.use_embed}
-                onCheckedChange={(checked) => setSpotifyFormData({ ...spotifyFormData, use_embed: checked })}
+                checked={soundcloudFormData.use_embed}
+                onCheckedChange={(checked) => setSoundcloudFormData({ ...soundcloudFormData, use_embed: checked })}
               />
               <Label htmlFor="use_embed">Use embedded player</Label>
             </div>
-            {spotifyFormData.use_embed && (
+            {soundcloudFormData.use_embed && soundcloudFormData.embed_url && (
               <div className="space-y-2">
-                <Label htmlFor="embed_url">Embed URL</Label>
+                <Label htmlFor="embed_url">Embed URL (auto-generated)</Label>
                 <Input
                   id="embed_url"
-                  value={spotifyFormData.embed_url}
-                  onChange={(e) => setSpotifyFormData({ ...spotifyFormData, embed_url: e.target.value })}
-                  placeholder="https://open.spotify.com/embed/playlist/..."
+                  value={soundcloudFormData.embed_url}
+                  onChange={(e) => setSoundcloudFormData({ ...soundcloudFormData, embed_url: e.target.value })}
+                  placeholder="https://w.soundcloud.com/player/?url=..."
                 />
               </div>
             )}
             <div className="flex items-center gap-2">
               <Switch
-                id="spotify-is_active"
-                checked={spotifyFormData.is_active}
-                onCheckedChange={(checked) => setSpotifyFormData({ ...spotifyFormData, is_active: checked })}
+                id="soundcloud-is_active"
+                checked={soundcloudFormData.is_active}
+                onCheckedChange={(checked) => setSoundcloudFormData({ ...soundcloudFormData, is_active: checked })}
               />
-              <Label htmlFor="spotify-is_active">Visible on portfolio</Label>
+              <Label htmlFor="soundcloud-is_active">Visible on portfolio</Label>
             </div>
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsSpotifyDialogOpen(false)}>
+            <Button variant="outline" onClick={() => setIsSoundCloudDialogOpen(false)}>
               Cancel
             </Button>
-            <Button onClick={handleSaveSpotifyPlaylist} className="gradient-accent">
-              {editingSpotifyPlaylist ? "Update" : "Create"}
+            <Button onClick={handleSaveSoundCloudPlaylist} className="gradient-accent">
+              {editingSoundCloudPlaylist ? "Update" : "Create"}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -868,15 +880,15 @@ export function MusicPanel() {
         </AlertDialogContent>
       </AlertDialog>
 
-      <AlertDialog open={!!deleteSpotifyId} onOpenChange={() => setDeleteSpotifyId(null)}>
+      <AlertDialog open={!!deleteSoundCloudId} onOpenChange={() => setDeleteSoundCloudId(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Spotify playlist?</AlertDialogTitle>
+            <AlertDialogTitle>Delete SoundCloud playlist?</AlertDialogTitle>
             <AlertDialogDescription>This action cannot be undone.</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={handleDeleteSpotifyPlaylist} className="bg-destructive text-destructive-foreground">
+            <AlertDialogAction onClick={handleDeleteSoundCloudPlaylist} className="bg-destructive text-destructive-foreground">
               Delete
             </AlertDialogAction>
           </AlertDialogFooter>
