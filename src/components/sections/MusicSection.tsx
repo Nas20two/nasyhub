@@ -16,11 +16,11 @@ interface Track {
   duration: string | null;
 }
 
-interface SpotifyPlaylist {
+interface SoundCloudPlaylist {
   id: string;
   title: string;
   description: string | null;
-  spotify_url: string;
+  soundcloud_url: string;
   embed_url: string | null;
   use_embed: boolean | null;
 }
@@ -36,21 +36,21 @@ interface YouTubePlaylist {
 export function MusicSection() {
   const [playingTrack, setPlayingTrack] = useState<string | null>(null);
   const [tracks, setTracks] = useState<Track[]>([]);
-  const [spotifyPlaylists, setSpotifyPlaylists] = useState<SpotifyPlaylist[]>([]);
+  const [soundcloudPlaylists, setSoundcloudPlaylists] = useState<SoundCloudPlaylist[]>([]);
   const [youtubePlaylists, setYoutubePlaylists] = useState<YouTubePlaylist[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [audioRef, setAudioRef] = useState<HTMLAudioElement | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
-      const [tracksRes, spotifyRes, youtubeRes] = await Promise.all([
+      const [tracksRes, soundcloudRes, youtubeRes] = await Promise.all([
         supabase.from("music_tracks").select("*").eq("is_active", true).order("display_order"),
-        supabase.from("spotify_playlists").select("*").eq("is_active", true).order("display_order"),
+        supabase.from("soundcloud_playlists").select("*").eq("is_active", true).order("display_order") as any,
         supabase.from("youtube_playlists").select("*").eq("is_active", true).order("display_order"),
       ]);
 
       if (!tracksRes.error) setTracks(tracksRes.data || []);
-      if (!spotifyRes.error) setSpotifyPlaylists(spotifyRes.data || []);
+      if (!soundcloudRes.error) setSoundcloudPlaylists(soundcloudRes.data || []);
       if (!youtubeRes.error) setYoutubePlaylists(youtubeRes.data || []);
       setIsLoading(false);
     };
@@ -80,7 +80,7 @@ export function MusicSection() {
     { id: "2", title: "Urban Nights", description: "Dark trap instrumental with atmospheric elements", category: "Original Beats", audio_url: null, duration: "2:58" },
   ];
 
-  const hasSpotifyPlaylists = spotifyPlaylists.length > 0;
+  const hasSoundcloudPlaylists = soundcloudPlaylists.length > 0;
   const hasYoutubePlaylists = youtubePlaylists.length > 0;
 
   return (
@@ -105,7 +105,7 @@ export function MusicSection() {
           <Tabs defaultValue="tracks" className="w-full">
             <TabsList className="grid w-full max-w-lg mx-auto grid-cols-3 mb-8">
               <TabsTrigger value="tracks">My Tracks</TabsTrigger>
-              <TabsTrigger value="spotify">Spotify</TabsTrigger>
+              <TabsTrigger value="soundcloud">SoundCloud</TabsTrigger>
               <TabsTrigger value="youtube">YouTube</TabsTrigger>
             </TabsList>
 
@@ -182,24 +182,24 @@ export function MusicSection() {
               )}
             </TabsContent>
 
-            {/* Spotify Playlists */}
-            <TabsContent value="spotify">
-              {!hasSpotifyPlaylists ? (
+            {/* SoundCloud Playlists */}
+            <TabsContent value="soundcloud">
+              {!hasSoundcloudPlaylists ? (
                 <div className="text-center py-12 text-muted-foreground">
                   <Music2 className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                  <p>No Spotify playlists added yet.</p>
+                  <p>No SoundCloud playlists added yet.</p>
                 </div>
               ) : (
                 <div className="grid md:grid-cols-2 gap-6">
-                  {spotifyPlaylists.map((playlist) => (
+                  {soundcloudPlaylists.map((playlist) => (
                     <Card key={playlist.id} className="overflow-hidden border-none shadow-card">
                       {playlist.use_embed && playlist.embed_url ? (
-                        <div className="aspect-[4/5] bg-muted">
+                        <div className="aspect-video bg-muted">
                           <iframe
                             src={playlist.embed_url}
                             width="100%"
                             height="100%"
-                            allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"
+                            allow="autoplay"
                             loading="lazy"
                             className="border-0"
                           />
@@ -222,11 +222,11 @@ export function MusicSection() {
                           <CardFooter>
                             <Button variant="outline" className="w-full" asChild>
                               <a
-                                href={playlist.spotify_url}
+                                href={playlist.soundcloud_url}
                                 target="_blank"
                                 rel="noopener noreferrer"
                               >
-                                Open in Spotify <ExternalLink className="ml-2 h-4 w-4" />
+                                Open in SoundCloud <ExternalLink className="ml-2 h-4 w-4" />
                               </a>
                             </Button>
                           </CardFooter>

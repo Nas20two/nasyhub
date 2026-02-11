@@ -349,6 +349,45 @@ export type Database = {
         }
         Relationships: []
       }
+      soundcloud_playlists: {
+        Row: {
+          created_at: string
+          description: string | null
+          display_order: number | null
+          embed_url: string | null
+          id: string
+          is_active: boolean | null
+          soundcloud_url: string
+          title: string
+          updated_at: string
+          use_embed: boolean | null
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          display_order?: number | null
+          embed_url?: string | null
+          id?: string
+          is_active?: boolean | null
+          soundcloud_url: string
+          title: string
+          updated_at?: string
+          use_embed?: boolean | null
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          display_order?: number | null
+          embed_url?: string | null
+          id?: string
+          is_active?: boolean | null
+          soundcloud_url?: string
+          title?: string
+          updated_at?: string
+          use_embed?: boolean | null
+        }
+        Relationships: []
+      }
       spotify_playlists: {
         Row: {
           created_at: string
