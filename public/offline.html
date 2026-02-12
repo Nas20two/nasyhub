@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Offline – NaSy Hub</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Source Sans 3', system-ui, sans-serif;
+      background: #f5f0eb;
+      color: #3d2e1e;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      text-align: center;
+      padding: 2rem;
+    }
+    .container { max-width: 420px; }
+    h1 {
+      font-family: 'Playfair Display', serif;
+      font-size: 2rem;
+      color: #c95d3a;
+      margin-bottom: 1rem;
+    }
+    p { font-size: 1.1rem; line-height: 1.6; margin-bottom: 1.5rem; }
+    button {
+      background: #c95d3a;
+      color: #fff;
+      border: none;
+      padding: 0.75rem 2rem;
+      border-radius: 8px;
+      font-size: 1rem;
+      cursor: pointer;
+    }
+    button:hover { opacity: 0.9; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>You're Offline</h1>
+    <p>It looks like you've lost your internet connection. Don't worry — previously visited pages may still be available.</p>
+    <button onclick="location.reload()">Try Again</button>
+  </div>
+</body>
+</html>
