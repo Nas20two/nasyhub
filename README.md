@@ -1,73 +1,112 @@
-# Welcome to your Lovable project
+# NaSy Hub — AI Portfolio & Personal Site
 
-## Project info
+![Site Preview](https://placeholder-screenshot.png)
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+> **Portfolio showcasing AI projects, creative work, and professional journey.**
 
-## How can I edit this code?
+**🚀 Live Site:** https://nasyhub.lovable.app
 
-There are several ways of editing your application.
+## 🎯 What It Is
 
-**Use Lovable**
+NaSy Hub is my personal portfolio and professional showcase:
+- **Projects** — All my AI-powered apps and tools
+- **Creative Work** — Music, visual art, experiments
+- **Resume/CV** — Professional background and experience
+- **Contact** — Ways to connect and collaborate
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
+## ✨ Features
 
-Changes made via Lovable will be committed automatically to this repo.
+- **Dynamic Project Showcase** — Projects pulled from Supabase (easy updates)
+- **Admin Dashboard** — Manage projects, content, and site settings
+- **Authentication** — Secure admin access
+- **Resume Download** — Token-protected PDF downloads
+- **Responsive Design** — Works beautifully on all devices
+- **PWA Support** — Install as native app
 
-**Use your preferred IDE**
+## 🛠️ Tech Stack
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+| Layer | Technology |
+|-------|------------|
+| Frontend | React 18 + TypeScript |
+| Styling | Tailwind CSS + shadcn/ui |
+| Backend | Supabase (Auth + Database + Storage) |
+| State | React Query (TanStack) |
+| Routing | React Router |
+| Build | Vite |
+| PWA | vite-plugin-pwa |
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+## 🚀 Deployment
 
-Follow these steps:
+### Prerequisites
+- Node.js 18+
+- Supabase account
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+### Environment Variables
+```bash
+VITE_SUPABASE_PROJECT_ID=your_project_id
+VITE_SUPABASE_PUBLISHABLE_KEY=your_anon_key
+VITE_SUPABASE_URL=your_supabase_url
+```
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
+### Local Development
+```bash
+npm install
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+### Deploy to Vercel
+```bash
+npm i -g vercel
+vercel --prod
+```
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+## 📊 What I Learned
 
-**Use GitHub Codespaces**
+Building my portfolio taught me:
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+1. **Content management via database** — Using Supabase means I can update projects without redeploying. Just add a row to the database.
 
-## What technologies are used for this project?
+2. **Protected routes matter** — Admin pages need authentication checks. React Router + Supabase Auth makes this clean.
 
-This project is built with:
+3. **Portfolio as product** — Treating my portfolio like a product (iterative updates, analytics, user feedback) makes it better than a static page.
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+## 🔮 Managing Content
 
-## How can I deploy this project?
+### Adding Projects
+1. Log into Supabase dashboard
+2. Go to Table Editor → `apps` table
+3. Add new row with:
+   - `name` — Project name
+   - `description` — What it does
+   - `app_url` — Live demo link
+   - `tags` — Tech stack tags
+   - `image_url` — Screenshot URL
+   - `is_active` — Show/hide
 
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
+### Updating Resume
+Upload new PDF to Supabase Storage, update download links in admin.
 
-## Can I connect a custom domain to my Lovable project?
+## 🔮 Roadmap
 
-Yes, you can!
+- [x] Dynamic project showcase
+- [x] Admin dashboard
+- [x] Authentication
+- [x] Resume download
+- [x] PWA support
+- [ ] Analytics dashboard
+- [ ] Blog/Writing section
+- [ ] Newsletter signup
+- [ ] Custom domain (nasyhub.com)
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+## 🤝 Why I Built This
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+I needed a portfolio that grows with me:
+- **Not static** — Easy to update without coding
+- **Professional** — Shows I can build full-stack apps
+- **Flexible** — Can add new sections as needed
+
+**Hiring?** Check out my projects: [github.com/Nas20two](https://github.com/Nas20two)
+
+---
+
+Built with ❤️ by [NaSy](https://github.com/Nas20two)
