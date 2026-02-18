@@ -15,7 +15,7 @@ interface Project {
   display_order: number | null;
 }
 
-export const AppsSection = () => {
+export const AppsSectionNew = () => {
   const [projects, setProjects] = useState<Project[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -24,7 +24,7 @@ export const AppsSection = () => {
     const fetchProjects = async () => {
       try {
         setLoading(true);
-        console.log("[AppsSection] Fetching projects from Supabase...");
+        console.log("[AppsSectionNew] Fetching projects from Supabase...");
         const { data, error } = await supabase
           .from("apps")
           .select("*")
@@ -32,13 +32,13 @@ export const AppsSection = () => {
           .order("display_order", { ascending: true });
 
         if (error) {
-          console.error("[AppsSection] Supabase error:", error);
+          console.error("[AppsSectionNew] Supabase error:", error);
           throw error;
         }
-        console.log("[AppsSection] Projects fetched:", data?.length || 0);
+        console.log("[AppsSectionNew] Projects fetched:", data?.length || 0);
         setProjects(data || []);
       } catch (err: any) {
-        console.error("[AppsSection] Error fetching projects:", err);
+        console.error("[AppsSectionNew] Error fetching projects:", err);
         setError(err.message);
       } finally {
         setLoading(false);
