@@ -26,7 +26,7 @@ export const AppsSection = () => {
       try {
         setLoading(true);
         // 1. We look for a table named 'apps'
-        const { data, error } = await supabase.from("apps").select("*").order("created_at", { ascending: false });
+        const { data, error } = await supabase.from("apps").select("*").order("display_order", { ascending: true });
 
         if (error) {
           throw error;
