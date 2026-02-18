@@ -24,16 +24,21 @@ export const AppsSection = () => {
     const fetchProjects = async () => {
       try {
         setLoading(true);
+        console.log("[AppsSection] Fetching projects from Supabase...");
         const { data, error } = await supabase
           .from("apps")
           .select("*")
           .eq("is_active", true)
           .order("display_order", { ascending: true });
 
-        if (error) throw error;
+        if (error) {
+          console.error("[AppsSection] Supabase error:", error);
+          throw error;
+        }
+        console.log("[AppsSection] Projects fetched:", data?.length || 0);
         setProjects(data || []);
       } catch (err: any) {
-        console.error("Error fetching projects:", err);
+        console.error("[AppsSection] Error fetching projects:", err);
         setError(err.message);
       } finally {
         setLoading(false);
@@ -125,4 +130,3 @@ export const AppsSection = () => {
     </section>
   );
 };
-// Deploy trigger: Wed Feb 18 14:17:05 AEDT 2026
