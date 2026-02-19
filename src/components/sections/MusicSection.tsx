@@ -76,11 +76,7 @@ export function MusicSection() {
     }
   };
 
-  // Show placeholder content if no data from database
-  const displayTracks = tracks.length > 0 ? tracks : [
-    { id: "1", title: "Summer Vibes", description: "Chill lo-fi beat perfect for relaxation", category: "Original Beats", audio_url: null, duration: "3:24" },
-    { id: "2", title: "Urban Nights", description: "Dark trap instrumental with atmospheric elements", category: "Original Beats", audio_url: null, duration: "2:58" },
-  ];
+  // Use actual tracks from database only - no placeholders
 
   const hasSoundcloudPlaylists = soundcloudPlaylists.length > 0;
   const hasYoutubePlaylists = youtubePlaylists.length > 0;
@@ -113,10 +109,18 @@ export function MusicSection() {
 
             {/* Original Tracks */}
             <TabsContent value="tracks" className="space-y-4" onContextMenu={(e) => e.preventDefault()}>
-              <p className="text-center text-xs text-muted-foreground italic mb-2">
-                🎧 Streaming only — downloads not available
-              </p>
-              {displayTracks.map((track) => (
+              {tracks.length === 0 ? (
+                <div className="text-center py-12 text-muted-foreground">
+                  <Music2 className="w-12 h-12 mx-auto mb-4 opacity-50" />
+                  <p className="mb-2">No tracks added yet.</p>
+                  <p className="text-sm">Upload your Ace Studio tracks to see them here.</p>
+                </div>
+              ) : (
+                <>
+                  <p className="text-center text-xs text-muted-foreground italic mb-2">
+                    🎧 Click play to preview — Buy for full download
+                  </p>
+                  {tracks.map((track) => (
                 <Card key={track.id} className="overflow-hidden border-none shadow-card hover:shadow-soft transition-all">
                   <div className="flex items-center gap-4 p-4">
                     {/* Play Button */}
@@ -188,12 +192,7 @@ export function MusicSection() {
                   </div>
                 </Card>
               ))}
-
-              {tracks.length === 0 && (
-                <p className="text-center text-sm text-muted-foreground mt-8">
-                  <Music2 className="inline-block w-4 h-4 mr-1" />
-                  Audio playback will be available once tracks are uploaded in the admin panel.
-                </p>
+                </>
               )}
             </TabsContent>
 

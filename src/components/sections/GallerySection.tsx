@@ -90,11 +90,16 @@ export function GallerySection() {
   if (images.length === 0) {
     return (
       <section id="gallery" className="py-24">
-        <div className="container mx-auto px-4 text-center">
+        <div className="container mx-auto px-4 text-center max-w-2xl">
           <h2 className="text-4xl md:text-5xl font-display font-bold mb-4">
             Art <span className="text-primary">Gallery</span>
           </h2>
-          <p className="text-muted-foreground">No images to display yet.</p>
+          <p className="text-muted-foreground mb-4">Digital artwork created with AI tools.</p>
+          <div className="p-6 bg-slate-800/50 rounded-xl border border-slate-700">
+            <Image className="w-12 h-12 mx-auto mb-3 text-slate-500" />
+            <p className="text-slate-400">No artwork uploaded yet.</p>
+            <p className="text-sm text-slate-500 mt-2">Add your digital art to Supabase to display here with buy buttons.</p>
+          </div>
         </div>
       </section>
     );
