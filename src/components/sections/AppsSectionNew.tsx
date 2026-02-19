@@ -36,7 +36,16 @@ export const AppsSectionNew = () => {
           throw error;
         }
         console.log("[AppsSectionNew] Projects fetched:", data?.length || 0);
-        setProjects(data || []);
+        
+        // Parse PostgreSQL array strings to JS arrays
+        const parsedData = data?.map((project: any) => ({
+          ...project,
+          tags: typeof project.tags === 'string' 
+            ? project.tags.replace(/[{}"]/g, '').split(',').filter(Boolean)
+            : project.tags || []
+        })) || [];
+        
+        setProjects(parsedData);
       } catch (err: any) {
         console.error("[AppsSectionNew] Error fetching projects:", err);
         setError(err.message);
