@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Play, Pause, Music2, ExternalLink, Headphones } from "lucide-react";
+import { Play, Pause, Music2, ExternalLink, Headphones, ShoppingCart } from "lucide-react";
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -14,6 +14,8 @@ interface Track {
   category: string | null;
   audio_url: string | null;
   duration: string | null;
+  price: number | null;
+  sale_url: string | null;
 }
 
 interface SoundCloudPlaylist {
@@ -44,7 +46,7 @@ export function MusicSection() {
   useEffect(() => {
     const fetchData = async () => {
       const [tracksRes, soundcloudRes, youtubeRes] = await Promise.all([
-        supabase.from("music_tracks").select("*").eq("is_active", true).order("display_order"),
+        supabase.from("music_tracks").select("id, title, description, category, audio_url, duration, price, sale_url").eq("is_active", true).order("display_order"),
         supabase.from("soundcloud_playlists").select("*").eq("is_active", true).order("display_order") as any,
         supabase.from("youtube_playlists").select("*").eq("is_active", true).order("display_order"),
       ]);
@@ -148,6 +150,19 @@ export function MusicSection() {
                         {track.description}
                       </p>
                     </div>
+
+                    {/* Buy Button */}
+                    {track.sale_url && (
+                      <a
+                        href={track.sale_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="hidden sm:inline-flex items-center gap-1 px-3 py-1.5 bg-pink-500/10 hover:bg-pink-500/20 text-pink-400 text-sm font-medium rounded-lg transition-colors shrink-0"
+                      >
+                        <ShoppingCart className="w-4 h-4" />
+                        {track.price ? `$${track.price}` : "Buy"}
+                      </a>
+                    )}
 
                     {/* Duration */}
                     <span className="text-sm text-muted-foreground shrink-0">

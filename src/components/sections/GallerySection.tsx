@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Image, X, ChevronLeft, ChevronRight, Loader2 } from "lucide-react";
+import { Image, X, ChevronLeft, ChevronRight, Loader2, ShoppingCart } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
@@ -13,6 +13,8 @@ interface GalleryImage {
   image_url: string;
   category_id: string | null;
   display_order: number | null;
+  price: number | null;
+  sale_url: string | null;
 }
 
 interface GalleryCategory {
@@ -34,7 +36,7 @@ export function GallerySection() {
       const [imagesRes, categoriesRes] = await Promise.all([
         supabase
           .from("gallery_images")
-          .select("id, title, description, image_url, category_id, display_order")
+          .select("id, title, description, image_url, category_id, display_order, price, sale_url")
           .eq("is_active", true)
           .order("display_order", { ascending: true }),
         supabase
@@ -153,11 +155,23 @@ export function GallerySection() {
                     <span className="text-white/30 text-4xl font-display font-bold -rotate-12 tracking-widest">NaSy</span>
                   </div>
                   {/* Overlay */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                     <div className="absolute bottom-0 left-0 right-0 p-4 text-white">
                       <h3 className="font-semibold mb-1">{image.title}</h3>
                       {image.description && (
-                        <p className="text-sm text-white/80">{image.description}</p>
+                        <p className="text-sm text-white/80 mb-2">{image.description}</p>
+                      )}
+                      {image.sale_url && (
+                        <a
+                          href={image.sale_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 text-sm font-medium text-pink-400 hover:text-pink-300"
+                          onClick={(e) => e.stopPropagation()}
+                        >
+                          <ShoppingCart className="w-4 h-4" />
+                          {image.price ? `Buy $${image.price}` : "Buy Print"}
+                        </a>
                       )}
                     </div>
                   </div>
@@ -214,15 +228,30 @@ export function GallerySection() {
                     {filteredImages[currentImageIndex]?.title}
                   </h3>
                   {filteredImages[currentImageIndex]?.description && (
-                    <p className="text-white/70">
+                    <p className="text-white/70 mb-2">
                       {filteredImages[currentImageIndex]?.description}
                     </p>
                   )}
-                  {filteredImages[currentImageIndex]?.category_id && (
-                    <Badge variant="secondary" className="mt-2">
-                      {getCategoryName(filteredImages[currentImageIndex]?.category_id)}
-                    </Badge>
-                  )}
+                  <div className="flex items-center justify-center gap-2">
+                    {filteredImages[currentImageIndex]?.category_id && (
+                      <Badge variant="secondary">
+                        {getCategoryName(filteredImages[currentImageIndex]?.category_id)}
+                      </Badge>
+                    )}
+                    {filteredImages[currentImageIndex]?.sale_url && (
+                      <a
+                        href={filteredImages[currentImageIndex]?.sale_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="inline-flex items-center gap-1 px-3 py-1 bg-pink-500 hover:bg-pink-600 text-white text-sm font-medium rounded-full transition-colors"
+                      >
+                        <ShoppingCart className="w-4 h-4" />
+                        {filteredImages[currentImageIndex]?.price 
+                          ? `Buy $${filteredImages[currentImageIndex]?.price}` 
+                          : "Buy Print"}
+                      </a>
+                    )}
+                  </div>
                 </div>
               </div>
             </DialogContent>
