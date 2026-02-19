@@ -118,7 +118,7 @@ export function GallerySection() {
               Digital artwork created with AI tools. Prints available for purchase.
             </p>
             <a
-              href="https://gumroad.com/nasyhub"  {/* Replace with your actual Gumroad store URL */}
+              href="https://nasyhub.gumroad.com/"
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 px-6 py-3 bg-pink-500 hover:bg-pink-600 text-white font-medium rounded-lg transition-colors"
