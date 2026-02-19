@@ -198,10 +198,38 @@ export function MusicSection() {
 
             {/* SoundCloud Playlists */}
             <TabsContent value="soundcloud">
+              {/* Featured Playlist - Hardcoded */}
+              <div className="mb-8">
+                <h3 className="text-xl font-semibold mb-4">Featured Playlist</h3>
+                <Card className="overflow-hidden border-none shadow-card">
+                  <div className="aspect-[16/9] md:aspect-[21/9] bg-muted">
+                    <iframe
+                      width="100%"
+                      height="100%"
+                      scrolling="no"
+                      frameBorder="no"
+                      allow="autoplay"
+                      src="https://w.soundcloud.com/player/?url=https%3A//api.soundcloud.com/playlists/1964504669&color=%23ff5500&auto_play=false&hide_related=false&show_comments=true&show_user=true&show_reposts=false&show_teaser=true&visual=true"
+                    />
+                  </div>
+                  <CardFooter className="flex justify-between items-center">
+                    <div>
+                      <h4 className="font-semibold">NaSy Playlist</h4>
+                      <p className="text-sm text-muted-foreground">Collection of my best tracks</p>
+                    </div>
+                    <Button variant="outline" size="sm" asChild>
+                      <a href="https://soundcloud.com/8_8-8/sets/nasy-playlist" target="_blank" rel="noopener noreferrer">
+                        Open in SoundCloud <ExternalLink className="ml-2 h-4 w-4" />
+                      </a>
+                    </Button>
+                  </CardFooter>
+                </Card>
+              </div>
+
               {!hasSoundcloudPlaylists ? (
                 <div className="text-center py-12 text-muted-foreground">
                   <Music2 className="w-12 h-12 mx-auto mb-4 opacity-50" />
-                  <p>No SoundCloud playlists added yet.</p>
+                  <p>No additional SoundCloud playlists added yet.</p>
                 </div>
               ) : (
                 <div className="grid md:grid-cols-2 gap-6">
