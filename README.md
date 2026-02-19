@@ -186,3 +186,4 @@ This portfolio is both a **job-hunting asset** and a **revenue-generating platfo
 ---
 
 Built with ❤️ by [NaSy](https://github.com/Nas20two)
+# author fix
