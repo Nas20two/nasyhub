@@ -11,7 +11,7 @@ interface Track {
   id: string;
   title: string;
   description: string | null;
-  category: string | null;
+  genre: string | null;
   audio_url: string | null;
   duration: string | null;
   price: number | null;
@@ -46,7 +46,7 @@ export function MusicSection() {
   useEffect(() => {
     const fetchData = async () => {
       const [tracksRes, soundcloudRes, youtubeRes] = await Promise.all([
-        supabase.from("music_tracks").select("id, title, description, category, audio_url, duration, price, sale_url").eq("is_active", true).order("display_order"),
+        supabase.from("music_tracks").select("id, title, description, genre, audio_url, duration, price, sale_url").eq("is_active", true).order("display_order"),
         supabase.from("soundcloud_playlists").select("*").eq("is_active", true).order("display_order") as any,
         supabase.from("youtube_playlists").select("*").eq("is_active", true).order("display_order"),
       ]);
@@ -156,7 +156,7 @@ export function MusicSection() {
                       <div className="flex items-center gap-2 mb-1">
                         <h3 className="font-semibold truncate">{track.title}</h3>
                         <Badge variant="secondary" className="text-xs shrink-0">
-                          {track.category}
+                          {track.genre}
                         </Badge>
                       </div>
                       <p className="text-sm text-muted-foreground truncate">
