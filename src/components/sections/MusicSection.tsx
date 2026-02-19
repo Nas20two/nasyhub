@@ -94,9 +94,18 @@ export function MusicSection() {
             <h2 className="text-4xl md:text-5xl font-display font-bold mb-4">
               <span className="text-primary">Music</span> & Sounds
             </h2>
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Original beats, sound design experiments, and curated playlists that inspire my work.
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto mb-6">
+              Original tracks created with AI. Licenses available for content creators.
             </p>
+            <a
+              href="https://gumroad.com/nasyhub"  {/* Replace with your actual Gumroad store URL */}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 px-6 py-3 bg-pink-500 hover:bg-pink-600 text-white font-medium rounded-lg transition-colors"
+            >
+              <ShoppingCart className="w-5 h-5" />
+              Browse All Tracks
+            </a>
           </div>
 
           {/* Tabs */}
@@ -154,19 +163,6 @@ export function MusicSection() {
                         {track.description}
                       </p>
                     </div>
-
-                    {/* Buy Button */}
-                    {track.sale_url && (
-                      <a
-                        href={track.sale_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="hidden sm:inline-flex items-center gap-1 px-3 py-1.5 bg-pink-500/10 hover:bg-pink-500/20 text-pink-400 text-sm font-medium rounded-lg transition-colors shrink-0"
-                      >
-                        <ShoppingCart className="w-4 h-4" />
-                        {track.price ? `$${track.price}` : "Buy"}
-                      </a>
-                    )}
 
                     {/* Duration */}
                     <span className="text-sm text-muted-foreground shrink-0">

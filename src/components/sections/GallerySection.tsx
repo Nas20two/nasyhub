@@ -114,9 +114,18 @@ export function GallerySection() {
             <h2 className="text-4xl md:text-5xl font-display font-bold mb-4">
               Art <span className="text-primary">Gallery</span>
             </h2>
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              A collection of my visual creations, from digital art to photography.
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto mb-6">
+              Digital artwork created with AI tools. Prints available for purchase.
             </p>
+            <a
+              href="https://gumroad.com/nasyhub"  {/* Replace with your actual Gumroad store URL */}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 px-6 py-3 bg-pink-500 hover:bg-pink-600 text-white font-medium rounded-lg transition-colors"
+            >
+              <ShoppingCart className="w-5 h-5" />
+              Browse All Prints
+            </a>
           </div>
 
           {/* Category Filter */}
@@ -160,23 +169,11 @@ export function GallerySection() {
                     <span className="text-white/30 text-4xl font-display font-bold -rotate-12 tracking-widest">NaSy</span>
                   </div>
                   {/* Overlay */}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300">
                     <div className="absolute bottom-0 left-0 right-0 p-4 text-white">
                       <h3 className="font-semibold mb-1">{image.title}</h3>
                       {image.description && (
-                        <p className="text-sm text-white/80 mb-2">{image.description}</p>
-                      )}
-                      {image.sale_url && (
-                        <a
-                          href={image.sale_url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1 text-sm font-medium text-pink-400 hover:text-pink-300"
-                          onClick={(e) => e.stopPropagation()}
-                        >
-                          <ShoppingCart className="w-4 h-4" />
-                          {image.price ? `Buy $${image.price}` : "Buy Print"}
-                        </a>
+                        <p className="text-sm text-white/80">{image.description}</p>
                       )}
                     </div>
                   </div>
@@ -233,30 +230,15 @@ export function GallerySection() {
                     {filteredImages[currentImageIndex]?.title}
                   </h3>
                   {filteredImages[currentImageIndex]?.description && (
-                    <p className="text-white/70 mb-2">
+                    <p className="text-white/70">
                       {filteredImages[currentImageIndex]?.description}
                     </p>
                   )}
-                  <div className="flex items-center justify-center gap-2">
-                    {filteredImages[currentImageIndex]?.category_id && (
-                      <Badge variant="secondary">
-                        {getCategoryName(filteredImages[currentImageIndex]?.category_id)}
-                      </Badge>
-                    )}
-                    {filteredImages[currentImageIndex]?.sale_url && (
-                      <a
-                        href={filteredImages[currentImageIndex]?.sale_url}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="inline-flex items-center gap-1 px-3 py-1 bg-pink-500 hover:bg-pink-600 text-white text-sm font-medium rounded-full transition-colors"
-                      >
-                        <ShoppingCart className="w-4 h-4" />
-                        {filteredImages[currentImageIndex]?.price 
-                          ? `Buy $${filteredImages[currentImageIndex]?.price}` 
-                          : "Buy Print"}
-                      </a>
-                    )}
-                  </div>
+                  {filteredImages[currentImageIndex]?.category_id && (
+                    <Badge variant="secondary" className="mt-2">
+                      {getCategoryName(filteredImages[currentImageIndex]?.category_id)}
+                    </Badge>
+                  )}
                 </div>
               </div>
             </DialogContent>
