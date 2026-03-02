@@ -3,15 +3,15 @@ import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 
-// Placeholder data - will be replaced with database content
-const placeholderPrototypes = [
+// AI Prototypes
+const prototypes = [
   {
     id: "1",
-    name: "AI Assistant Prototype",
-    description: "An experimental AI chatbot built with Google AI Studio exploring conversational interfaces.",
+    name: "AI Assistant",
+    description: "Your AI companion for explaining complex tech concepts and jargon in simple, clear terms. Built with React, TypeScript, and Gemini API.",
     image_url: null,
-    prototype_url: "#",
-    status: "Active",
+    prototype_url: "https://ai-assistant-clean.vercel.app",
+    status: "Live",
   },
   {
     id: "2",
@@ -44,7 +44,7 @@ export function PrototypesSection() {
 
           {/* Prototypes Grid */}
           <div className="grid md:grid-cols-2 gap-6">
-            {placeholderPrototypes.map((prototype) => (
+            {prototypes.map((prototype) => (
               <Card key={prototype.id} className="group overflow-hidden border-none shadow-card hover:shadow-soft transition-all duration-300">
                 <div className="flex flex-col sm:flex-row">
                   {/* Prototype Icon/Image */}
