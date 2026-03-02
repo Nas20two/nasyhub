@@ -52,7 +52,7 @@ export function AboutSection() {
             <div className="relative">
               <div className="aspect-square max-w-[14rem] mx-auto rounded-2xl overflow-hidden shadow-soft bg-gradient-to-br from-secondary to-accent">
                <img 
-                 src={profile?.avatar_url || "https://xspsvvsxxnciqwqiellm.supabase.co/storage/v1/object/public/Gallery/profile-avatar.jpg"} 
+                 src={profile?.avatar_url || "https://xspsvvsxxnciqwqiellm.supabase.co/storage/v1/object/public/Gallery/profile-avatar-v2.jpg"} 
                  alt={profile?.display_name || "Profile"} 
                  className="w-full h-full object-cover"
                />
