@@ -51,17 +51,11 @@ export function AboutSection() {
             {/* Profile Image Placeholder */}
             <div className="relative">
               <div className="aspect-square max-w-[14rem] mx-auto rounded-2xl overflow-hidden shadow-soft bg-gradient-to-br from-secondary to-accent">
-               {profile?.avatar_url ? (
-                 <img 
-                   src={profile.avatar_url} 
-                   alt={profile.display_name || "Profile"} 
-                   className="w-full h-full object-cover"
-                 />
-               ) : (
-                 <div className="w-full h-full flex items-center justify-center">
-                   <User className="w-16 h-16 text-muted-foreground/50" />
-                 </div>
-               )}
+               <img 
+                 src={profile?.avatar_url || "https://xspsvvsxxnciqwqiellm.supabase.co/storage/v1/object/public/Gallery/profile-avatar.jpg"} 
+                 alt={profile?.display_name || "Profile"} 
+                 className="w-full h-full object-cover"
+               />
               </div>
               {/* Decorative accent */}
               <div className="absolute -bottom-4 -right-4 w-24 h-24 bg-primary/20 rounded-full blur-2xl" />
