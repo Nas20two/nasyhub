@@ -50,7 +50,7 @@ export function ResumeSection() {
  
    const displaySkills = skills.length > 0 
      ? skills.map(s => s.split(":")[0].trim())
-     : ["React", "TypeScript", "Node.js", "Python", "AI/ML", "Figma", "Ableton", "Photoshop"];
+     : ["AI/LLM Integration", "React", "TypeScript", "Supabase", "Customer Success", "Solutions Engineering"];
  
   return (
     <section id="resume" className="py-24">
@@ -62,7 +62,7 @@ export function ResumeSection() {
               My <span className="text-primary">Resume</span>
             </h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto mb-8">
-              A brief overview of my professional journey and skills.
+              15+ years in enterprise tech. Now building with AI.
             </p>
             <Button 
               className="gradient-accent"
