@@ -10,9 +10,9 @@ import { Card, CardContent } from "@/components/ui/card";
  };
  
  const defaultSkills = [
-   { label: "Development", description: "Building web apps & tools" },
-   { label: "Design", description: "Creating visual experiences" },
-   { label: "Music", description: "Producing beats & sounds" },
+   { label: "AI Solutions", description: "LLM integration & automation" },
+   { label: "Full-Stack", description: "React, TypeScript, Supabase" },
+   { label: "Enterprise", description: "15+ years B2B SaaS experience" },
  ];
  
  interface ProfileData {
@@ -74,7 +74,7 @@ export function AboutSection() {
               </h2>
               
               <p className="text-lg text-muted-foreground mb-6">
-                 {profile?.bio || "Welcome to my creative hub! I'm passionate about building digital experiences that blend technology with artistry. From web applications to AI experiments, from visual art to music production — this is where all my creative work comes together."}
+                 {profile?.bio || "AI Solutions Engineer building practical tools. 15+ years in enterprise tech, now focused on AI applications that solve real problems."}
               </p>
               
 
