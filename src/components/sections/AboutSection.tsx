@@ -68,7 +68,7 @@ export function AboutSection() {
               </h2>
               
               <p className="text-lg text-muted-foreground mb-6">
-                 {profile?.bio || "AI Solutions Engineer building practical tools. 15+ years in enterprise tech, now focused on AI applications that solve real problems."}
+                 {profile?.bio || "AI enthusiast and Tech optimist. Building practical tools that solve real problems."}
               </p>
               
 
