@@ -19,7 +19,7 @@ export function ContactSection() {
   const { toast } = useToast();
   const [isSubmitting, setIsSubmitting] = useState(false);
    const [contactInfo, setContactInfo] = useState<ContactInfo>({
-     location: "Your City, Country",
+     location: "Sydney, Australia",
      github_url: null,
      linkedin_url: null,
      twitter_url: null,
@@ -158,21 +158,6 @@ export function ContactSection() {
 
             {/* Contact Info */}
             <div className="lg:col-span-2 space-y-6">
-              {/* Location */}
-              <Card className="border-none shadow-card">
-                <CardContent className="p-6">
-                  <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-full bg-secondary flex items-center justify-center">
-                      <MapPin className="w-5 h-5 text-primary" />
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground">Location</p>
-                       <p className="font-medium">{contactInfo.location}</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
               {/* Location */}
               <Card className="border-none shadow-card">
                 <CardContent className="p-6">

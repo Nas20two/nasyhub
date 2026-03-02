@@ -63,8 +63,8 @@ export function Footer() {
             </div>
           )}
           
-          <p className="flex items-center gap-1 text-sm text-muted-foreground">
-            Made with <Heart className="h-4 w-4 text-primary fill-primary" /> using Lovable
+          <p className="text-sm text-muted-foreground">
+            Built with React & Supabase
           </p>
         </div>
       </div>
