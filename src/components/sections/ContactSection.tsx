@@ -57,25 +57,29 @@ export function ContactSection() {
     e.preventDefault();
     setIsSubmitting(true);
 
-     const { error } = await supabase.from("contact_messages").insert({
-       name: formData.name,
-       email: formData.email,
-       message: formData.message,
-     });
+    try {
+      const response = await fetch('/api/contact', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formData),
+      });
 
-     if (error) {
-       toast({
-         title: "Error",
-         description: "Failed to send message. Please try again.",
-         variant: "destructive",
-       });
-     } else {
-       toast({
-         title: "Message sent!",
-         description: "Thank you for reaching out. I'll get back to you soon.",
-       });
-       setFormData({ name: "", email: "", message: "" });
-     }
+      if (response.ok) {
+        toast({
+          title: "Message sent!",
+          description: "Thank you for reaching out. I'll get back to you soon.",
+        });
+        setFormData({ name: "", email: "", message: "" });
+      } else {
+        throw new Error('Failed to send');
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to send message. Please try again.",
+        variant: "destructive",
+      });
+    }
 
     setIsSubmitting(false);
   };
