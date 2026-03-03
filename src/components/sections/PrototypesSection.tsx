@@ -9,7 +9,7 @@ const prototypes = [
     id: "1",
     name: "AI Assistant",
     description: "Your AI companion for explaining complex tech concepts and jargon in simple, clear terms. Built with React, TypeScript, and Gemini API.",
-    image_url: null,
+    image_url: "https://ai-assistant-clean.vercel.app/bot-icon.svg",
     prototype_url: "https://ai-assistant-clean.vercel.app",
     status: "Live",
   },
