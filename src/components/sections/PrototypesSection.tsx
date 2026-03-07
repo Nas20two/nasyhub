@@ -15,11 +15,11 @@ const prototypes = [
   },
   {
     id: "2",
-    name: "Vision Experiment",
-    description: "Testing multimodal AI capabilities for image analysis and creative applications.",
-    image_url: null,
+    name: "Smart Inspector",
+    description: "Affordable AI-powered quality inspection for SMB manufacturers. $12 ESP32-CAM or $33 Pi Zero 2 W. Cloud vision AI detects defects in real-time.",
+    image_url: "https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=400&h=400&fit=crop",
     prototype_url: "#",
-    status: "Prototype",
+    status: "In Development",
   },
 ];
 
